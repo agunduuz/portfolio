@@ -7,13 +7,14 @@
 | Framework | Next.js 15 App Router | Route bazlı SSG/ISR, metadata API, `ImageResponse` |
 | Dil       | TypeScript strict     | Harici veri var; tip güvenliği pazarlık dışı       |
 | Stil      | Tailwind CSS v4       | CSS-first `@theme`, config dosyası yok             |
-| Animasyon | `motion`              | Uydu kartların `layout` animasyonu için zorunlu    |
+| Animasyon | `motion`              | Ray konteynerinin `layout` animasyonu için zorunlu |
 | İçerik    | MDX (dosya tabanlı)   | Tek yazar için CMS gereksiz gecikme                |
 | Mail      | Resend + React Email  | Server Action'dan tek çağrı                        |
 | Doğrulama | Zod                   | Form + GitHub yanıtı + frontmatter aynı araçla     |
 | Hosting   | Vercel                | ISR ve edge cache framework'le hizalı              |
 
-**Bilinçli kullanılmayanlar:** state kütüphanesi, UI kit, Contentlayer, GSAP, i18n.
+**Bilinçli kullanılmayanlar:** state kütüphanesi (DraftProvider 40 satır, yeter),
+UI kit, Contentlayer, GSAP, i18n.
 
 ---
 
@@ -22,7 +23,8 @@
 ```
 src/
 ├── app/
-│   ├── layout.tsx                # KALICI KABUK: nav, ray, footer, deck controller
+│   ├── layout.tsx                # KALICI KABUK: nav, ray, footer, DraftProvider
+│   ├── template.tsx              # ana bölge çapraz geçişi
 │   ├── page.tsx                  # Anasayfa
 │   ├── hakkimda/page.tsx
 │   ├── projeler/page.tsx
@@ -38,42 +40,47 @@ src/
 │
 ├── components/
 │   ├── shell/
-│   │   ├── DeckShell.tsx         # 100dvh kabuk, 12 kolon grid
-│   │   ├── SatelliteRail.tsx     # "use client" — kalıcı kartlar + layout animasyonu
+│   │   ├── DeckShell.tsx         # 100dvh, max-w-1280, 4×3 grid
+│   │   ├── SatelliteRail.tsx     # "use client" — layout animasyonlu konteyner
 │   │   ├── DeckController.tsx    # "use client" — wheel/klavye
 │   │   ├── Nav.tsx · Footer.tsx
-│   ├── cards/                    # HeroCard, ProjectsCard, WritingsCard,
-│   │                             # AboutMeCard, JobOffersCard, SubscribeCard
-│   ├── modules/                  # SummaryModule, LastProject, RepoGrid,
-│   │                             # GitHubProfile, LastWriting, PostList, Article
+│   ├── cards/                    # Hero, Projects, Writings, AboutMe,
+│   │                             # JobOffers, Subscribe
+│   ├── modules/                  # LastProject, RepoGrid, GitHubProfile,
+│   │                             # LastWriting, PostList, Article
 │   └── ui/                       # Button, Input, Field, TechBadges, Carousel,
 │                                 # Pagination, CoverImage, ReadingProgress
 ├── lib/
-│   ├── github.ts · mdx.ts · seo.ts · env.ts · rate-limit.ts
+│   └── github.ts · mdx.ts · seo.ts · env.ts · rate-limit.ts
 ├── hooks/
-│   ├── useDeckNavigation.ts · useElapsed.ts · useProxiedWheel.ts
+│   └── useDeckNavigation.ts · useElapsed.ts · useProxiedWheel.ts
+├── state/
+│   └── DraftProvider.tsx         # "use client" — form taslağı + carousel indeksi
 ├── config/
-│   ├── site.ts                   # kimlik, sosyal linkler, deck sırası
-│   ├── page-manifest.ts          # hangi sayfada hangi kart, hangi grid alanında
-│   ├── featured-projects.ts
-│   └── tech-icons.ts
+│   ├── site.ts · page-manifest.ts · featured-projects.ts · tech-icons.ts · about.ts
 └── content/blog/*.mdx
 ```
 
 ---
 
-## 3. Kalıcı kabuk mimarisi (projenin kalbi)
+## 3. Kalıcı kabuk mimarisi
 
-### 3.1 Problem
+### 3.1 Gerekçe
 
-Uydu kartlar sayfalar arasında **taşınmalı**, yeniden doğmamalı. Kart her route'ta
-`page.tsx` içinde render edilirse Next.js onu unmount edip yeniden mount eder — Motion
-`layout` animasyonu çalışmaz, carousel'in konumu sıfırlanır, sayaç yeniden başlar.
+`layout.tsx` route değişiminde yeniden render **edilmez**; React ağacında kalır. Bunu iki
+şey için kullanıyoruz:
 
-### 3.2 Çözüm
+1. **Ray konteynerinin stabil kalması.** `SatelliteRail` route'lar arası aynı React elemanı
+   olarak yaşar; `grid-area`'sı değiştiğinde Motion `layout` animasyonu onu kaydırır.
+   Sayfa dosyasında olsaydı her route'ta unmount/mount olur, kayma yerine zıplama görünürdü.
+2. **Manifest'in tek kaynak olması.** Hangi sayfada hangi kartın nerede olduğu tek dosyadan
+   okunur; sayfa dosyaları yalnızca ana bölgeyi doldurur.
 
-Uydu kartlar `app/layout.tsx` içinde yaşar. `layout.tsx` route değişiminde **yeniden render
-edilmez**; React ağacında kalır. Sayfa dosyaları yalnızca ana bölgeyi doldurur.
+> **Bu gerekçe listesinde eskiden "kartların persist etmesi" de vardı, düştü.** Manifest
+> incelemesinde ardışık sayfalarda ortak kart bulunmadığı görüldü; kartlar zaten unmount
+> oluyor. Kaybı can yakan state `DraftProvider`'a taşındı (§3.4).
+
+### 3.2 Kabuk
 
 ```tsx
 // src/app/layout.tsx
@@ -82,113 +89,143 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [repos, posts, profile] = await Promise.all([
-    getRepos(),
-    getAllPosts(),
-    getProfile(),
-  ]);
+  const [github, posts] = await Promise.all([getGitHub(), getAllPosts()]);
 
   return (
     <html lang="tr" className={fonts}>
       <body>
-        <DeckShell>
-          <Nav />
-          <div className="deck-grid">
-            <SatelliteRail repos={repos} posts={posts} />
-            <main id="main" className="deck-main">
-              {children}
-            </main>
-          </div>
-          <Footer />
-        </DeckShell>
+        <DraftProvider>
+          <DeckShell>
+            <Nav />
+            <div className="deck-grid">
+              <SatelliteRail>
+                {{
+                  hero: <HeroCard size="sm" />,
+                  projects: <ProjectsCard size="sm" repos={github.repos} />,
+                  writings: <WritingsCard size="sm" posts={posts} />,
+                  aboutMe: <AboutMeCard size="sm" />,
+                  jobOffers: <JobOffersCard size="sm" />,
+                  subscribe: <SubscribeCard size="sm" variant="detail" />,
+                }}
+              </SatelliteRail>
+              <main id="main">{children}</main>
+            </div>
+            <Footer />
+          </DeckShell>
+        </DraftProvider>
       </body>
     </html>
   );
 }
 ```
 
-Veri layout'ta bir kez çekilir ve ray ile ana bölge aynı kaynağı kullanır. `Promise.all` ile
-paralel; `fetch` cache'i sayesinde aynı istek iki kez gitmez.
+Kart içerikleri **Server Component** olarak `children` map'i üzerinden geçer;
+`SatelliteRail` yalnızca sarmalayıcı olarak client'tır. Bu, kırmızı çizgi 4 ile
+"Server Component varsayılan" kuralını uzlaştırır.
+
+Veri layout'ta bir kez çekilir; `fetch` cache'i sayesinde ana bölge aynı veriyi
+tekrar istediğinde yeni istek gitmez.
 
 ### 3.3 Sayfa manifestosu
-
-Hangi sayfada hangi kartın nerede olacağı tek bir dosyada tanımlanır:
 
 ```ts
 // src/config/page-manifest.ts
 export type CardId =
-  | "projects"
-  | "writings"
-  | "aboutMe"
-  | "jobOffers"
-  | "subscribe"
-  | "hero";
+  "hero" | "projects" | "writings" | "aboutMe" | "jobOffers" | "subscribe";
+
+type Slot = { id: CardId; area: string }; // "satır / kolon / satır-sonu / kolon-sonu"
 
 export const MANIFEST: Record<
   string,
-  {
-    railSide: "left" | "right" | "none";
-    rail: { id: CardId; area: string }[]; // CSS grid-area
-    mainArea: string;
-  }
+  { railSide: "left" | "right" | "none"; rail: Slot[]; mainArea: string }
 > = {
   "/": {
     railSide: "none",
     rail: [
-      { id: "aboutMe", area: "1 / 1 / 3 / 4" },
-      { id: "projects", area: "1 / 4 / 2 / 7" },
-      { id: "writings", area: "1 / 7 / 2 / 10" },
-      { id: "subscribe", area: "2 / 4 / 3 / 10" },
-      { id: "jobOffers", area: "1 / 10 / 3 / 13" },
+      { id: "aboutMe", area: "2 / 1 / 4 / 2" },
+      { id: "projects", area: "2 / 2 / 3 / 3" },
+      { id: "writings", area: "2 / 3 / 4 / 4" },
+      { id: "subscribe", area: "3 / 2 / 4 / 4" },
+      { id: "jobOffers", area: "2 / 4 / 4 / 5" },
     ],
-    mainArea: "hero",
+    mainArea: "1 / 1 / 2 / 5", // Hero
   },
   "/hakkimda": {
     railSide: "right",
     rail: [
-      { id: "projects", area: "1 / 10 / 2 / 13" },
-      { id: "jobOffers", area: "2 / 10 / 4 / 13" },
+      { id: "projects", area: "1 / 4 / 2 / 5" },
+      { id: "jobOffers", area: "2 / 4 / 4 / 5" },
     ],
-    mainArea: "1 / 1 / 4 / 10",
+    mainArea: "1 / 1 / 4 / 4",
   },
   "/projeler": {
     railSide: "left",
     rail: [
-      { id: "writings", area: "1 / 1 / 2 / 4" },
-      { id: "aboutMe", area: "2 / 1 / 4 / 4" },
+      { id: "writings", area: "1 / 1 / 2 / 2" },
+      { id: "aboutMe", area: "2 / 1 / 4 / 2" },
     ],
-    mainArea: "1 / 4 / 4 / 13",
+    mainArea: "1 / 2 / 4 / 5",
   },
   "/blog": {
     railSide: "right",
     rail: [
-      { id: "projects", area: "1 / 10 / 2 / 13" },
-      { id: "jobOffers", area: "2 / 10 / 4 / 13" },
+      { id: "projects", area: "1 / 4 / 2 / 5" },
+      { id: "jobOffers", area: "2 / 4 / 4 / 5" },
     ],
-    mainArea: "1 / 1 / 4 / 10",
+    mainArea: "1 / 1 / 4 / 4",
   },
   "/blog/[slug]": {
     railSide: "right",
     rail: [
-      { id: "subscribe", area: "1 / 10 / 2 / 13" },
-      { id: "aboutMe", area: "2 / 10 / 4 / 13" },
+      { id: "subscribe", area: "1 / 4 / 2 / 5" },
+      { id: "aboutMe", area: "2 / 4 / 4 / 5" },
     ],
-    mainArea: "1 / 1 / 4 / 10",
+    mainArea: "1 / 1 / 4 / 4",
   },
 };
 ```
 
-`SatelliteRail` mevcut pathname'e göre manifesti okur, kartları `AnimatePresence` içinde
-render eder. Her kartın `key`'i sabit `id`'sidir — bu yüzden sayfa değişse de aynı React
-elemanı kalır ve Motion `layout` prop'u konumu animasyonla taşır.
+Anasayfada Hero ana bölgedir (`mainArea` 1. satırın tamamı); diğer beş kart `rail`
+dizisindedir. Bu, Home→About geçişinde Projects ve Job Offers'ın `layoutId` ile
+taşınmasını mümkün kılar.
 
-**`id` sabit kalmalı.** `key={`${pathname}-${id}`}` yazarsan kart her sayfada yeniden doğar
-ve tüm sistem çöker. Bu, bu projede yapılabilecek en pahalı hatadır.
+### 3.4 DraftProvider
 
-### 3.4 Kart boyutu
+Kart unmount olduğunda kaybı can yakan iki şey var. İkisi de burada yaşar, fazlası değil.
 
-Kart hangi grid alanında olduğunu bilmez; genişliğini `size` prop'undan alır.
-Manifest `area` ile birlikte `size` de verir (`sm` | `md` | `lg`).
+```tsx
+// src/state/DraftProvider.tsx  ("use client")
+type Draft = {
+  jobOffer: {
+    location: string;
+    type: string;
+    technology: string;
+    amount: string;
+  };
+  carousel: { projects: number; writings: number };
+};
+
+const DraftCtx = createContext<{
+  draft: Draft;
+  setJobOffer: (patch: Partial<Draft["jobOffer"]>) => void;
+  setCarousel: (key: keyof Draft["carousel"], index: number) => void;
+} | null>(null);
+
+export function DraftProvider({ children }: { children: React.ReactNode }) {
+  const [draft, setDraft] = useState<Draft>(EMPTY);
+  // ...
+  return <DraftCtx.Provider value={value}>{children}</DraftCtx.Provider>;
+}
+```
+
+**Kapsam kuralı:** yalnızca form taslağı ve carousel indeksi. Kart state'ini topluca
+buraya taşıma — sayaç buraya girmez (mutlak tarihten türer), scroll pozisyonu girmez
+(route değişince zaten sıfırlanmalı).
+
+Form başarıyla gönderildiğinde taslak temizlenir.
+
+`sessionStorage`'a yazma **yok**: form taslağı kişisel veridir ve sekme kapandığında
+kaybolması doğru davranıştır.
 
 ---
 
@@ -203,16 +240,16 @@ Manifest `area` ile birlikte `size` de verir (`sm` | `md` | `lg`).
 | `/blog/[slug]` | SSG + ISR | `generateStaticParams` + 1 saat  |
 
 Layout'ta GitHub verisi olduğu için hiçbir sayfa tam statik değil; hepsi ISR.
-Bu kabul edilebilir: ilk byte hâlâ cache'ten gelir.
+İlk byte hâlâ cache'ten gelir.
 
-Hiçbir sayfa client-side render edilmez. Deck geçişi client'ta olur ama her route'un HTML'i
-sunucudan tam gelir.
+Hiçbir sayfa client-side render edilmez. Deck geçişi client'ta olur ama her route'un
+HTML'i sunucudan tam gelir.
 
 ---
 
 ## 5. GitHub veri akışı
 
-Tasarım üç ayrı GitHub verisi istiyor: repo listesi, öne çıkan repo detayı ve profil kartı.
+Tasarım üç ayrı veri istiyor: repo listesi, öne çıkan repo detayı, profil kartı.
 Tek GraphQL sorgusuyla üçü birden gelir.
 
 ```graphql
@@ -221,8 +258,8 @@ query Portfolio($login: String!) {
     login
     name
     bio
-    avatarUrl(size: 240)
     url
+    avatarUrl(size: 240)
     repositories(
       first: 20
       privacy: PUBLIC
@@ -282,15 +319,15 @@ export async function getGitHub(): Promise<GitHubData> {
 **Kurallar:**
 
 - Token yalnızca sunucuda. `NEXT_PUBLIC_` öneki asla.
-- Fine-grained token'da yalnızca `Metadata: Read` yeterli — public veri için fazlası gereksiz.
-- 403/429 veya şema uyumsuzluğunda `FALLBACK` devreye girer; kart asla boş kalmaz.
-- Filtre: `isArchived`, `isFork` ve `portfolio-hidden` topic'li repo'lar elenir.
+- Fine-grained token'da yalnızca `Metadata: Read` yeterli.
+- 403/429 veya şema uyumsuzluğunda `FALLBACK`; kart asla boş kalmaz.
+- Filtre: `isArchived`, `isFork`, `portfolio-hidden` topic'i elenir.
 - Sıralama: `featured-projects.ts` manuel sırası önce, kalanlar `pushedAt` desc.
 
-**Kapak görselleri.** `openGraphImageUrl` her repo için gelir (repo'ya özel görsel yoksa
-GitHub otomatik üretir). `next.config.ts`:
+**Kapak görselleri.** `openGraphImageUrl` her repo için gelir.
 
 ```ts
+// next.config.ts
 images: {
   formats: ["image/avif", "image/webp"],
   remotePatterns: [
@@ -301,7 +338,7 @@ images: {
 }
 ```
 
-**Webhook.** `app/api/revalidate/route.ts` GitHub push webhook'unu alır, `x-hub-signature-256`
+**Webhook.** `app/api/revalidate/route.ts` push webhook'unu alır, `x-hub-signature-256`
 imzasını `crypto.timingSafeEqual` ile doğrular, `revalidateTag("github")` çağırır.
 İmza doğrulanmadan hiçbir şey yapılmaz.
 
@@ -310,7 +347,6 @@ imzasını `crypto.timingSafeEqual` ile doğrular, `revalidateTag("github")` ça
 ## 6. Blog akışı
 
 `content/blog/*.mdx` → `gray-matter` → Zod → `next-mdx-remote/rsc`.
-
 Eklentiler: `remark-gfm`, `rehype-slug`, `rehype-autolink-headings`, `rehype-pretty-code`.
 Okuma süresi `reading-time` ile hesaplanır, frontmatter'a yazılmaz.
 
@@ -321,24 +357,27 @@ export default async function BlogPage({ searchParams }: { searchParams: Promise
   const { page } = await searchParams;
   const current = Math.max(1, Number(page) || 1);
   const posts = await getAllPosts();
-  const [featured, ...rest] = posts;              // "Last Writing" her sayfada aynı mı?
   const perPage = 3;
-  const slice = rest.slice((current - 1) * perPage, current * perPage);
+
+  const [featured, ...rest] = posts;
+  const source = current === 1 ? rest : posts;      // bkz. karar notu
+  const slice = source.slice((current - 1) * perPage, current * perPage);
+  if (current > 1 && slice.length === 0) notFound();
   ...
 }
 ```
 
 **Karar:** "Last Writing" kartı yalnızca 1. sayfada öne çıkan yazıyı gösterir; 2. sayfadan
-itibaren o slot listenin devamına dönüşür. Aynı yazıyı her sayfada tekrar göstermek hem
-yer israfı hem içerik tekrarıdır.
+itibaren o slot listenin devamına dönüşür. Aynı yazıyı her sayfada tekrar göstermek hem yer
+israfı hem içerik tekrarıdır.
 
-`current` sınır dışıysa (`page=99`) → `notFound()`. Boş sayfa 200 dönmemeli.
+Sınır dışı sayfa → `notFound()`. Boş liste 200 dönmemeli.
 
 ---
 
 ## 7. Formlar
 
-Server Action, API route değil — JS kapalıyken de çalışsın ve ek endpoint olmasın.
+Server Action, API route değil — JS kapalıyken de çalışsın.
 
 ```ts
 // src/app/actions/job-offer.ts
@@ -358,27 +397,26 @@ export async function sendJobOffer(
   if (!parsed.success)
     return { ok: false, fieldErrors: parsed.error.flatten().fieldErrors };
 
-  await resend.emails.send({
-    /* ... */
-  });
+  await resend.emails.send({/* ... */});
   return { ok: true };
 }
 ```
 
 İstemcide `useActionState` + `useFormStatus`. Pending'de buton `disabled` ve "Sending…".
 
-**Dikkat:** form kartları kalıcı raydadır. Form gönderimi sayfa değişimini tetiklememeli;
-Server Action zaten route değiştirmez, ama `redirect()` çağırma.
+**Taslak entegrasyonu:** input'lar `DraftProvider`'dan controlled değer alır; her
+değişiklik `setJobOffer` ile yazılır. Başarılı gönderimde taslak temizlenir.
 
-Rate limit: Upstash Redis (ücretsiz katman). Bellek içi `Map` üretimde çalışmaz —
-Vercel'de her lambda ayrı bellektir.
+`redirect()` çağırma — form gönderimi sayfa değişimi tetiklememeli.
+
+Rate limit: Upstash Redis. Bellek içi `Map` üretimde çalışmaz (Vercel'de her lambda ayrı bellek).
 
 ---
 
 ## 8. Ortam değişkenleri
 
 ```bash
-# .env.local — asla commit edilmez
+# .env.local — asla commit edilmez, asla sohbete yapıştırılmaz
 GITHUB_TOKEN=
 GITHUB_USERNAME=anilgunduz
 GITHUB_WEBHOOK_SECRET=
@@ -393,6 +431,10 @@ NEXT_PUBLIC_CAREER_START=2021-09-01T00:00:00Z
 
 `src/lib/env.ts` bunları Zod ile parse eder ve **build sırasında** doğrular.
 Eksik değişkenle build patlamalı. `.env.example` commit edilir.
+
+**Sızıntı prosedürü:** bir anahtar sohbete, log'a veya commit'e girerse iptal edilip
+yeniden üretilir. `GITHUB_WEBHOOK_SECRET` değişirse GitHub webhook ayarında da güncellenir
+— iki yerde birden değişmezse webhook sessizce 401 döner.
 
 ---
 

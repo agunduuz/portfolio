@@ -20,10 +20,11 @@ lang: "tr"
 ---
 ```
 
-`description` (SEO, 150–160 karakter) ile `excerpt` (kart özeti, 2 satır) ayrı alanlardır.
-Aynı metni iki yerde kullanmak ikisini de kötüleştirir. `excerpt` boşsa `description` kullanılır.
+`description` (SEO, 150–160 karakter) ile `excerpt` (kart özeti, 2 satır) **ayrı
+alanlardır**. Aynı metni iki yerde kullanmak ikisini de kötüleştirir. `excerpt` boşsa
+`description` kullanılır.
 
-Zod şeması `src/lib/mdx.ts` içinde, doğrulama build sırasında. Bozuk frontmatter build'i patlatır.
+Zod şeması `src/lib/mdx.ts` içinde; doğrulama build sırasında. Bozuk frontmatter build'i patlatır.
 
 **Kurallar:**
 
@@ -42,16 +43,15 @@ Zod şeması `src/lib/mdx.ts` içinde, doğrulama build sırasında. Bozuk front
 | `<Figure src alt caption>`             | Başlıklı görsel      |
 | `<Aside>`                              | Kenar notu           |
 
-`src/components/mdx/` altında tanımlanır. Ham `<div>` yazma; stil tutarlılığı böyle korunur.
+`src/components/mdx/` altında tanımlanır. Ham `<div>` yazma.
 
-**Dikkat:** makale dar bir kart içinde (9 kolon, ~900px) render edilir. Geniş tablolar ve
+**Dikkat:** makale 3 kolonluk bir kart içinde (~914px) render edilir. Geniş tablolar ve
 uzun kod satırları taşar. `<pre>` içinde `overflow-x: auto` ve tablolar için sarmalayıcı
 `overflow-x: auto` zorunlu.
 
 ## 3. GitHub veri şemaları
 
 ```ts
-// tek sorgu, üç tüketici
 type GitHubData = {
   profile: {
     login: string; // "GitHub Username" — accent
@@ -80,18 +80,18 @@ type Project = {
 };
 ```
 
-**Filtreleme:** `isFork`, `isArchived`, `isPrivate` ve `portfolio-hidden` topic'li repo'lar elenir.
+**Filtreleme:** `isFork`, `isArchived`, `isPrivate` ve `portfolio-hidden` topic'i elenir.
 
 **Sıralama:** `config/featured-projects.ts` manuel sırası önce, kalanlar `pushedAt` desc.
 
 **Slot dağılımı (`/projeler`):**
 
-- Last Project → sıradaki 1.
+- Last Project → 1.
 - Repo ızgarası → 2. ve 3.
-- Projects kartı carousel'i → tüm liste (ilk 8)
+- Projects kartı carousel'i → ilk 8
 
-**Fallback:** API çökerse `featured-projects.ts` içindeki elle yazılmış 3 proje render edilir.
-Kart asla boş kalmaz, donmuş iskelet bırakılmaz.
+**Fallback:** API çökerse `featured-projects.ts` içindeki elle yazılmış 3 proje render
+edilir. Kart asla boş kalmaz, donmuş iskelet bırakılmaz.
 
 ```ts
 // src/config/featured-projects.ts
@@ -104,13 +104,12 @@ export const FEATURED = [
 
 ## 4. Teknoloji rozetleri
 
-Tasarımda repo kartlarında üç ikon var (Next.js, TypeScript, Tailwind). Bunlar
-topic'ler ve `primaryLanguage` üzerinden türetilir.
+Tasarımda repo kartlarında üç ikon (Next.js, TypeScript, Tailwind). Topic'ler ve
+`primaryLanguage` üzerinden türetilir.
 
 ```ts
 // src/config/tech-icons.ts
 export const TECH_MAP: Record<string, TechId> = {
-  // topic → ikon
   nextjs: "nextjs",
   "next-js": "nextjs",
   typescript: "typescript",
@@ -119,30 +118,26 @@ export const TECH_MAP: Record<string, TechId> = {
   react: "react",
   nodejs: "node",
   postgresql: "postgres",
-  // primaryLanguage.name → ikon
   TypeScript: "typescript",
   JavaScript: "javascript",
   Python: "python",
 };
 ```
 
-**Kurallar:**
-
-- En fazla 4 ikon; fazlası `+2` metni olarak
+- En fazla 4 ikon; fazlası `+2` metni
 - Eşleşmeyen teknoloji için ikon **uydurma** — atla
-- Her ikonda `<title>` ve `aria-label` (teknoloji adı)
-- İkonlar `simple-icons`'tan inline SVG olarak kopyalanır; paketi bağımlılık olarak ekleme
+- Her ikonda `<title>` ve `aria-label`
+- İkonlar `simple-icons`'tan inline SVG olarak kopyalanır; paketi bağımlılık ekleme
 
-Bu, repo'larına doğru topic eklemeni gerektirir. GitHub'da her projeye
-`nextjs`, `typescript`, `tailwindcss` gibi topic'ler ekle — rozetler oradan gelecek.
+**Senin işin:** GitHub'da her projeye `nextjs`, `typescript`, `tailwindcss` gibi topic'ler
+ekle — rozetler oradan gelecek. Gizlemek istediklerine `portfolio-hidden` ekle.
 
 ## 5. Arayüz metinleri
 
-Arayüz İngilizce (tasarımdaki gibi), blog Türkçe.
-
-**Kart metinleri** — `config/site.ts` içinde tek yerde:
+Arayüz İngilizce (tasarımdaki gibi), blog Türkçe. Tek yerde:
 
 ```ts
+// src/config/site.ts
 export const COPY = {
   hero: {
     title: "Developer. Improver.",
@@ -178,16 +173,15 @@ export const COPY = {
 } as const;
 ```
 
-**Not:** Anasayfa Subscribe kartındaki metin tasarımda lorem ipsum. Gerçek metin yaz —
-placeholder bir bölümün "tamamlandı" sayılmasını engeller.
+**Not:** anasayfa Subscribe kartındaki metin tasarımda lorem ipsum. Gerçek metin yaz.
 
 **"Go to X" kalıbı:** `Go to` gri, hedef bold beyaz.
 `Go to **Live**` · `Go to **Writing.**` · `Go to **Detail**` · `Go to **Profile**`
 
 **Alt link kalıbı:** `More ›` · `Repository ›` · `Detail ›`
 
-**Ünlem uyarısı:** tasarımdaki "Writings Heading!" bir placeholder'dır. Gerçek yazı
-başlıklarına ünlem taşıma.
+**Ünlem uyarısı:** tasarımdaki "Writings Heading!" bir placeholder'dır. Gerçek başlıklara
+ünlem taşıma.
 
 ## 6. Site kimliği
 
@@ -199,7 +193,6 @@ export const SITE = {
   location: "Samsun, Türkiye",
   email: "…",
   resume: "/anil-gunduz-cv.pdf",
-  careerStart: "2021-09-01T00:00:00Z",
   socials: [
     { name: "GitHub", url: "…", icon: "github" },
     { name: "LinkedIn", url: "…", icon: "linkedin" },
@@ -215,11 +208,13 @@ export const SITE = {
 Bu değerler JSON-LD `Person.sameAs`, footer ve hero'da aynı yerden okunur.
 İki yerde ayrı yazılan bir link er geç ayrışır.
 
+`careerStart` burada değil, `NEXT_PUBLIC_CAREER_START` env değişkenindedir — sayaç
+onu okur.
+
 ## 7. Hakkımda içeriği
 
-Tasarımda tek kart içinde iki başlık:
-
 ```ts
+// src/config/about.ts
 export const ABOUT = {
   summary: `2–3 paragraf gerçek biyografi.`,
   jobHistory: [
@@ -234,9 +229,9 @@ export const ABOUT = {
 } as const;
 ```
 
-`to: null` → "Günümüz". Zaman biçimi tutarlı: `Oca 2023 — Günümüz`.
+`to: null` → "Günümüz". Tarih biçimi tutarlı: `Oca 2023 — Günümüz`.
 
-İsteğe bağlı ek başlıklar (`Skills`, `Education`) **aynı kartın içine** eklenir, yeni kart açılmaz.
+Ek başlıklar (`Skills`, `Education`) **aynı kartın içine** eklenir, yeni kart açılmaz.
 Yetenek seviyesi yüzdesi kullanma — uydurma veridir.
 
 ## 8. Yazı tonu
