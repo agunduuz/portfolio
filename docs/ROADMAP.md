@@ -3,75 +3,93 @@
 Her faz tek bir Claude Code oturumuna sığacak büyüklükte. Faz bitmeden sonrakine geçme;
 `npm run build` temiz değilse faz bitmemiştir.
 
-**Sıralama mantığı:** kalıcı kabuk ve kart sistemi önce kurulur. Sayfalar bu sistemin üstüne
-gelir. Ters sırada yaparsan (önce sayfalar, sonra kabuk) her sayfayı yeniden yazmak zorunda kalırsın.
+**Sıralama mantığı:** kabuk ve ray sistemi önce kurulur. Sayfalar bunun üstüne gelir.
+Ters sırada yaparsan her sayfayı yeniden yazmak zorunda kalırsın.
 
 ---
 
+## Faz -1 — Güvenlik (hemen)
+
+Bu faz, `.env.local` içeriği herhangi bir yere (sohbet, log, commit, ekran görüntüsü)
+sızmışsa zorunludur.
+
+- [ ] GitHub PAT iptal, yenisi üretildi (fine-grained, yalnızca `Metadata: Read`)
+- [ ] Resend API anahtarı silindi, yenisi üretildi
+- [ ] Upstash REST token rotate edildi
+- [ ] `GITHUB_WEBHOOK_SECRET` yenilendi **ve GitHub webhook ayarında da güncellendi**
+      (iki yerde birden değişmezse webhook sessizce 401 döner)
+
 ## Faz 0 — Zemin (1 oturum)
 
-- [ ] `create-next-app` iskeleti, TypeScript strict
-- [ ] Tailwind v4 `@theme` bloğuna `DESIGN-SYSTEM.md` tokenları
-- [ ] Fontlar `public/fonts/`, `next/font/local` ile bağlandı
-- [ ] **Türkçe glif testi**: `ı İ ğ Ğ ş Ş ç Ç ö Ö ü Ü` görsel kontrol
-- [ ] `config/site.ts` gerçek verilerle dolduruldu
-- [ ] `lib/env.ts` Zod doğrulaması + `.env.example`
-- [ ] `next.config.ts` → `images.remotePatterns` (GitHub domainleri)
-- [ ] ESLint + Prettier + `.gitignore`
-- [ ] Git init, ilk commit
+- [x] `create-next-app` iskeleti, TypeScript strict
+- [x] Tailwind v4 `@theme` bloğuna `DESIGN-SYSTEM.md` tokenları
+      (renk + yatay ölçü + `dvh` clamp'leri)
+- [x] Fontlar `public/fonts/`, `next/font/local` ile bağlandı
+- [x] **Türkçe glif testi**: `ı İ ğ Ğ ş Ş ç Ç ö Ö ü Ü` görsel kontrol
+- [x] **Figma ölçü doğrulaması**: `--shell-max`, `--pad-shell`, `--gap-col` değerleri
+      Figma'dan teyit edildi; kolon genişliği türetiliyor mu kontrol edildi
+- [x] `config/site.ts` gerçek verilerle dolduruldu
+- [x] `lib/env.ts` Zod doğrulaması + `.env.example`
+- [x] `next.config.ts` → `images.remotePatterns` (3 GitHub domaini)
+- [x] ESLint + Prettier + `.gitignore`
+- [x] Git init, ilk commit
 
 **Bitiş:** boş sayfa doğru font ve renklerle açılıyor, `tsc --noEmit` temiz.
 
-## Faz 1 — Kalıcı kabuk (1–2 oturum)
+## Faz 1 — Kabuk ve ray (1–2 oturum)
 
-Projenin en kritik fazı. Burada acele etme.
+Projenin en kritik fazı. Acele etme.
 
-- [ ] `DeckShell` — `100dvh`, `overflow-hidden`, 12×3 grid
-- [ ] `Nav` (aktif link durumu) + `Footer`
-- [ ] `config/page-manifest.ts` — beş sayfanın kart/alan haritası
-- [ ] `SatelliteRail` — `AnimatePresence` + sabit `key` + `layout` prop
-- [ ] Kart iskeletleri (içerik boş, sadece kutu + başlık) — 6 kart
-- [ ] `size` varyant sistemi (`sm` / `md` / `lg`)
-- [ ] Dört route iskeleti + `template.tsx` ana bölge geçişi
-- [ ] `useDeckNavigation` — eşik, kilit, momentum sönümü, rubber-band
-- [ ] Klavye navigasyonu + `data-scrollable` istisnası
-- [ ] `prefers-reduced-motion` dalı
-- [ ] Nav nokta göstergesi + `aria-current`
+- [x] `DeckShell` — `100dvh`, `max-w-[--shell-max] mx-auto`, 4×3 grid,
+      nav/footer yükseklikleri `dvh` token'ından
+- [x] `Nav` (aktif link) + `Footer`
+- [x] `config/page-manifest.ts` — beş sayfanın kart/alan haritası (4 kolon notasyonu)
+- [x] `state/DraftProvider.tsx` — form taslağı + carousel indeksi
+- [x] `SatelliteRail` — konteyner `layout` animasyonu, `AnimatePresence`, sabit `key`,
+      `layoutId`, kart içeriği `layout="position"` ile sarılmış
+- [x] Kart iskeletleri (içerik boş, sadece kutu + başlık) — 6 kart
+- [x] `size` varyant sistemi (`sm` / `md` / `lg`)
+- [x] Dört route iskeleti + `template.tsx` ana bölge geçişi
+- [x] `useDeckNavigation` — eşik, kilit, momentum sönümü, rubber-band, 800px eşiği
+- [x] Klavye navigasyonu + `data-scrollable` istisnası
+- [x] `prefers-reduced-motion` dalı
+- [x] Ray tarafında nokta göstergesi + `aria-current`
 
-**Bitiş:** `INTERACTIONS.md` §9 "Deck" ve "Kart taşınması" listelerindeki maddeler geçiyor.
-Kartlar boş kutu olsa bile ray sağdan sola geçmeli ve kartlar taşınmalı.
+**Bitiş:** kartlar boş kutu olsa bile **ray sağdan sola kayarak taraf değiştiriyor,
+zıplamıyor**. `INTERACTIONS.md` §9 "Deck", "Ray ve kartlar", "Dikey sığma" listeleri geçiyor.
 
 ## Faz 2 — Kart içerikleri (2 oturum)
 
-- [ ] `HeroCard` — avatar, başlık, tanıtım, 7 sosyal ikon (`lg` ve `md` varyant)
+- [ ] `HeroCard` — avatar, başlık, tanıtım, 7 sosyal ikon (`sm` ve `lg` varyant)
 - [ ] `AboutMeCard` — hidrasyon güvenli sayaç, `tabular-nums`, `visibilitychange`
-- [ ] `ProjectsCard` — carousel, statik veriyle
-- [ ] `WritingsCard` — carousel, statik veriyle
-- [ ] `SubscribeCard` — form UI, iki alt metin varyantı
-- [ ] `JobOffersCard` — 4 alanlı form UI
-- [ ] `TechBadges` bileşeni + `config/tech-icons.ts`
+- [ ] `ProjectsCard` — carousel, indeks `DraftProvider`'dan
+- [ ] `WritingsCard` — carousel, indeks `DraftProvider`'dan
+- [ ] `SubscribeCard` — form UI, iki alt metin varyantı (`home` / `detail`)
+- [ ] `JobOffersCard` — 4 alanlı form UI, değerler `DraftProvider`'dan controlled
+- [ ] `TechBadges` + `config/tech-icons.ts`
+- [ ] Kart içerikleri Server Component olarak `children` üzerinden geçiyor
 
-**Bitiş:** anasayfa tasarıma uygun, 1440×900'de scroll yok, sayfa değişiminde carousel
-indeksi ve sayaç korunuyor.
+**Bitiş:** anasayfa tasarıma uygun, dört çözünürlükte scroll yok, sayfa değişiminde
+carousel indeksi ve form taslağı korunuyor.
 
 ## Faz 3 — GitHub verisi (1 oturum)
 
 - [ ] `lib/github.ts` — tek GraphQL sorgusu (profil + repo'lar), Zod parse
 - [ ] `revalidate: 3600` + `tags: ["github"]`
 - [ ] Fallback, filtreleme, sıralama, slot dağılımı
-- [ ] `layout.tsx`'te `Promise.all` ile veri çekimi, ray + ana bölgeye dağıtım
+- [ ] `layout.tsx`'te `Promise.all` ile veri, ray + ana bölgeye dağıtım
 - [ ] `api/revalidate/route.ts` — `timingSafeEqual` imza doğrulaması
-- [ ] Kapak görselleri `next/image` ile, `sizes` doğru
+- [ ] Kapak görselleri `next/image`, `sizes` doğru
 
 **Bitiş:** token'ı boz, dev sunucusunu yeniden başlat — site hâlâ render ediyor.
 
 ## Faz 4 — Hakkımda ve Projeler (1–2 oturum)
 
-- [ ] `/hakkimda` — Hero (`lg`, 9 kolon) + Summary/Job History kartı
+- [ ] `/hakkimda` — Hero (`lg`) + Summary/Job History kartı
 - [ ] `config/about.ts` gerçek biyografi ve iş geçmişi
 - [ ] `/projeler` — ray **sola** geçiyor
-- [ ] `LastProject` modülü — kare kapak, açıklama, Go to Live, rozetler, Repository ›
-- [ ] `RepoGrid` — 2'li alt grid, geniş kapaklar
+- [ ] `LastProject` — kare kapak, açıklama, Go to Live, rozetler, Repository ›
+- [ ] `RepoGrid` — 2'li alt grid, geniş kapaklar, sağ altta Repository ›
 - [ ] `GitHubProfile` — avatar, kullanıcı adı, repo sayısı, bio, Go to Profile
 
 **Bitiş:** `/hakkimda` → `/projeler` geçişinde ray ekranın bir yanından diğerine kayıyor.
@@ -97,13 +115,14 @@ indeksi ve sayaç korunuyor.
 - [ ] Honeypot + zaman eşiği + Upstash rate limit
 - [ ] Resend + React Email şablonu
 - [ ] `useActionState` / `useFormStatus` — pending/success/error
+- [ ] Başarılı gönderimde `DraftProvider` taslağı temizleniyor
 - [ ] JS kapalı testi
-- [ ] Form dolu durumdayken sayfa değişimi testi (metin kaybolmamalı)
+- [ ] Form dolu durumdayken sayfa değişimi testi
 
 ## Faz 7 — SEO ve performans (1 oturum)
 
 - [ ] Route başına `generateMetadata`, sayfalama başlıkları dahil
-- [ ] Semantik iskelet: `<main>` / `<aside>` ayrımı, tek `<h1>`, kart başlıkları `<h3>`
+- [ ] Semantik iskelet: `<main>` / `<aside>`, tek `<h1>`, kart başlıkları `<h3>`
 - [ ] `sitemap.ts`, `robots.ts`, `rss.xml`
 - [ ] JSON-LD: `Person`, `WebSite`, `ItemList`, `BlogPosting`, `BreadcrumbList`
 - [ ] `opengraph-image.tsx` — ana sayfa + yazı başına dinamik
@@ -114,14 +133,14 @@ indeksi ve sayaç korunuyor.
 
 ## Faz 8 — Erişilebilirlik ve cila (1 oturum)
 
-- [ ] Klavyeyle tam gezinti testi (deck, carousel, kart içi scroll, sayfalama)
+- [ ] Klavyeyle tam gezinti (deck, carousel, kart içi scroll, sayfalama)
 - [ ] Kontrast denetimi — `text-2`/`text-3` kullanımları
 - [ ] Ekran okuyucu testi (VoiceOver): sayfa değişimi duyurusu, sayaç sessiz
 - [ ] `axe` DevTools sıfır kritik hata
 - [ ] Reduced motion testi
 - [ ] `grep -ri "lorem" src content` → boş
-- [ ] Chanel kuralı: her ekrandan bir fazlalık çıkarıldı
 - [ ] Mobil düzen: kart sırası ana bölge → uydu
+- [ ] Chanel kuralı: her ekrandan bir fazlalık çıkarıldı
 
 ## Faz 9 — Yayın
 
@@ -131,6 +150,7 @@ indeksi ve sayaç korunuyor.
 - [ ] Search Console + Bing Webmaster + sitemap gönderimi
 - [ ] Vercel Speed Insights açık
 - [ ] Lighthouse CI GitHub Actions'ta
+- [ ] Faz Kontrol paneli kaldırıldı (`rm -rf src/app/faz-kontrol`)
 
 ---
 
