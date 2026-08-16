@@ -36,9 +36,7 @@ export function DeckDots({ side }: { side: RailSide }) {
           >
             <span
               className={`block size-1.5 rounded-full transition-colors duration-(--dur-micro) ${
-                active
-                  ? "bg-accent"
-                  : "bg-text-3 group-hover:bg-text-2"
+                active ? "bg-accent" : "bg-text-3 group-hover:bg-text-2"
               }`}
             />
           </Link>

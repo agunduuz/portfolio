@@ -8,12 +8,7 @@
  */
 
 export type CardId =
-  | "hero"
-  | "projects"
-  | "writings"
-  | "aboutMe"
-  | "jobOffers"
-  | "subscribe";
+  "hero" | "projects" | "writings" | "aboutMe" | "jobOffers" | "subscribe";
 
 export type RailSide = "left" | "right" | "none";
 
@@ -32,7 +27,12 @@ export const MANIFEST = {
     rail: [
       { id: "aboutMe", area: "2 / 1 / 4 / 2" },
       { id: "projects", area: "2 / 2 / 3 / 3" },
-      { id: "writings", area: "2 / 3 / 4 / 4" },
+      // Writings, Projects'in ikizidir: 1 kolon, YALNIZCA 2. satır. PRD §4
+      // "Writings (1 kol, satır 2–3)" diyor ama bu bir yazım hatası — öyle
+      // olsaydı Subscribe (3 / 2 / 4 / 4) ile 3. satır 3. kolonda çakışırdı.
+      // design/home.png ölçümü: Projects ve Writings kutuları y 584–884 ile
+      // aynı, Subscribe ikisinin de altında y 936–1185.
+      { id: "writings", area: "2 / 3 / 3 / 4" },
       { id: "subscribe", area: "3 / 2 / 4 / 4" },
       { id: "jobOffers", area: "2 / 4 / 4 / 5" },
     ],

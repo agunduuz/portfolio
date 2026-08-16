@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import type { ReactNode } from "react";
 
 /**
@@ -22,7 +28,7 @@ type JobOfferDraft = {
   amount: string;
 };
 
-type CarouselKey = "projects" | "writings";
+export type CarouselKey = "projects" | "writings";
 
 type Draft = {
   jobOffer: JobOfferDraft;

@@ -22,10 +22,23 @@ import { resolveLayout, type CardId } from "@/config/page-manifest";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 
-export function SatelliteRail({ cards }: { cards: Record<CardId, ReactNode> }) {
+export function SatelliteRail({
+  cards,
+  detailCards,
+}: {
+  cards: Record<CardId, ReactNode>;
+  /**
+   * Yazı detayında farklı render edilen kartlar. Şu an yalnızca Subscribe:
+   * anasayfada 2 kolon ve davet metniyle, detayda 1 kolon ve bağlam metniyle
+   * çıkar (CONTENT-MODEL §5). Kartı ikizlemek yerine düğüm burada seçilir —
+   * kart hâlâ tek bileşen ve Server Component.
+   */
+  detailCards?: Partial<Record<CardId, ReactNode>>;
+}) {
   const pathname = usePathname();
   const reduced = useReducedMotion();
   const { rail } = resolveLayout(pathname);
+  const isDetail = pathname.startsWith("/blog/");
 
   return (
     <aside className="contents" aria-label="Uydu kartlar">
@@ -52,8 +65,11 @@ export function SatelliteRail({ cards }: { cards: Record<CardId, ReactNode> }) {
             }
           >
             {/* `layout="position"` olmadan taşıma sırasında `scale` metni ezer. */}
-            <motion.div layout={reduced ? false : "position"} className="h-full">
-              {cards[id]}
+            <motion.div
+              layout={reduced ? false : "position"}
+              className="h-full"
+            >
+              {(isDetail && detailCards?.[id]) || cards[id]}
             </motion.div>
           </motion.div>
         ))}

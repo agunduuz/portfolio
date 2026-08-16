@@ -43,7 +43,11 @@ export function DeckGrid({
       className="deck-grid relative grid min-h-0 flex-1 grid-cols-4 gap-x-(--gap-col) gap-y-(--gap-row)"
       // Satır oranı CSS değişkeni olarak geçer ki kısa ekranda `.deck-grid`
       // onu `auto` ile ezebilsin — inline style medya sorgusunu yenerdi.
-      style={{ "--deck-rows": isHome ? GRID_ROWS.home : GRID_ROWS.default } as CSSProperties}
+      style={
+        {
+          "--deck-rows": isHome ? GRID_ROWS.home : GRID_ROWS.default,
+        } as CSSProperties
+      }
     >
       {rail}
 

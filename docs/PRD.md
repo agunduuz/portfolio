@@ -67,10 +67,15 @@ Tek istisna sayfa: ray yok, hero 4 kolonun tamamı.
 
 - Nav → Home aktif
 - Hero (4 kolon, satır 1)
-- About Me (1 kol, satır 2–3) · Projects (1 kol, satır 2) · Writings (1 kol, satır 2–3) ·
+- About Me (1 kol, satır 2–3) · Projects (1 kol, satır 2) · Writings (1 kol, **satır 2**) ·
   Job Offers (1 kol, satır 2–3)
 - Subscribe (2 kol, satır 3)
 - Footer
+
+> **Faz 2 düzeltmesi.** Burada Writings için önce "satır 2–3" yazıyordu; bu bir
+> yazım hatasıydı — öyle olsaydı Subscribe (satır 3, kolon 2–3) ile 3. satırın 3. kolonunda çakışırdı ve iki kart üst üste binerdi. design/home.png ölçümü:
+> Projects ve Writings kutuları y 584–884 ile aynı, Subscribe ikisinin de
+> altında y 936–1185. Writings, Projects'in ikizidir.
 
 **Kabul kriterleri:**
 

@@ -60,17 +60,30 @@ zıplamıyor**. `INTERACTIONS.md` §9 "Deck", "Ray ve kartlar", "Dikey sığma" 
 
 ## Faz 2 — Kart içerikleri (2 oturum)
 
-- [ ] `HeroCard` — avatar, başlık, tanıtım, 7 sosyal ikon (`sm` ve `lg` varyant)
-- [ ] `AboutMeCard` — hidrasyon güvenli sayaç, `tabular-nums`, `visibilitychange`
-- [ ] `ProjectsCard` — carousel, indeks `DraftProvider`'dan
-- [ ] `WritingsCard` — carousel, indeks `DraftProvider`'dan
-- [ ] `SubscribeCard` — form UI, iki alt metin varyantı (`home` / `detail`)
-- [ ] `JobOffersCard` — 4 alanlı form UI, değerler `DraftProvider`'dan controlled
-- [ ] `TechBadges` + `config/tech-icons.ts`
-- [ ] Kart içerikleri Server Component olarak `children` üzerinden geçiyor
+- [x] `HeroCard` — avatar, başlık, tanıtım, 7 sosyal ikon (`lg`; rayda hiç
+      görünmediği için `sm` varyantı yok)
+- [x] `AboutMeCard` — hidrasyon güvenli sayaç, `tabular-nums`, `visibilitychange`
+- [x] `ProjectsCard` — carousel, indeks `DraftProvider`'dan
+- [x] `WritingsCard` — carousel, indeks `DraftProvider`'dan
+- [x] `SubscribeCard` — form UI, iki alt metin varyantı (`home` / `detail`)
+- [x] `JobOffersCard` — 4 alanlı form UI, değerler `DraftProvider`'dan controlled
+- [x] `TechBadges` + `config/tech-icons.ts` (+ `config/brand-icons.ts`, 15 glif)
+- [x] Kart içerikleri Server Component olarak `children` üzerinden geçiyor
+      (client kalanlar: `TimeSpent`, `Carousel`, `JobOfferForm`, `SubscribeForm`)
 
 **Bitiş:** anasayfa tasarıma uygun, dört çözünürlükte scroll yok, sayfa değişiminde
 carousel indeksi ve form taslağı korunuyor.
+
+**Faz 2 notları (Faz 3 bunları devralır):**
+
+- Kart verisi **bilinçli olarak bağlanmadı**: Projects GitHub'ı (Faz 3), Writings
+  MDX'i (Faz 5) bekliyor. İkisi de boş durum metniyle render ediyor ve `projects` /
+  `writings` prop'unu alacak şekilde hazır.
+- Yol boyunca çıkan üç ölçüm düzeltmesi dokümanlara işlendi: input renkleri
+  (DESIGN-SYSTEM §6), kabuk dış payı `--pad-shell-y` (§3.2), Writings satır
+  aralığı (PRD §4 — Subscribe ile çakışıyordu).
+- **Açık karar:** Figma'daki accent #05ffb4, token'daki #3be8a5. Faz 0'da
+  sabitlenmiş; değiştirilmedi, sahibi karar verecek.
 
 ## Faz 3 — GitHub verisi (1 oturum)
 

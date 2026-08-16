@@ -22,6 +22,8 @@ import {
 export default function DeckLayout({ children }: LayoutProps<"/">) {
   // Kart içerikleri Server Component olarak üretilip ray'e prop geçer;
   // client sınırı yalnızca sarmalayıcıdadır.
+  // Projects ve Writings verisi Faz 3 ve Faz 5'te bağlanır; o zamana kadar
+  // kartlar boş durum metniyle render eder (CONTENT-MODEL §8).
   const cards = {
     hero: <HeroCard />,
     projects: <ProjectsCard />,
@@ -31,11 +33,19 @@ export default function DeckLayout({ children }: LayoutProps<"/">) {
     subscribe: <SubscribeCard />,
   };
 
+  const detailCards = {
+    subscribe: <SubscribeCard size="sm" variant="detail" />,
+  };
+
   return (
     <DraftProvider>
       <DeckController />
       <DeckShell>
-        <DeckGrid rail={<SatelliteRail cards={cards} />}>{children}</DeckGrid>
+        <DeckGrid
+          rail={<SatelliteRail cards={cards} detailCards={detailCards} />}
+        >
+          {children}
+        </DeckGrid>
       </DeckShell>
     </DraftProvider>
   );

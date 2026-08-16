@@ -20,6 +20,22 @@
   --color-danger: #ff6b6b;
   --color-success: var(--color-accent);
 
+  /* Faz 2 ölçüm tutanağı (design/home.png, 1920×1426 artboard).
+     DESIGN-SYSTEM §6 bu üçünü adlandırıyor ama değerini vermiyordu; piksel
+     örneklemesiyle çıkarıldı.
+
+     Buton: "Send the Offer." ve "Enter." zemini tam #999999, metin beyaz.
+     Kontrastı düşük — bu bilinçli bir TASARIM TERCİHİ, erişilebilirlik
+     sorunu değil (CLAUDE.md → bağlayıcılık, PRD §9).
+
+     Input: tasarımda kart yüzeyinden KOYU (#1b1b1b), yani çukur; §6'nın
+     `bg-elevated` reçetesi yönü ters yazmış. Figma kazanır. Kenarlık
+     `--color-border` değil, tam #999999 1px. */
+  --color-button: #999999;
+  --color-button-hover: #a8a8a8;
+  --color-field: #1b1b1b;
+  --color-field-border: #999999;
+
   --font-display: var(--font-jost);
   --font-sans: var(--font-inter);
   --font-mono: var(--font-jetbrains-mono);
@@ -48,6 +64,13 @@
   --h-footer: clamp(72px, 9.82dvh, 150px);
   --gap-row: clamp(28px, 3.9dvh, 56px);
   --gap-field: clamp(10px, 1.4dvh, 18px);
+
+  /* Kabuğun DIŞ dikey boşluğu — satır boşluğuyla aynı değer değildir.
+     Faz 2 ölçümü (design/home.png): nav y=32'de başlıyor, footer y=1394'te
+     bitiyor → 32/1426 = %2.24. `--gap-row` (%3.9) buraya da uygulanınca
+     842px'lik bir viewport'ta 28px fazladan yeniyordu ve Hero kartı içeriğini
+     kırpıyordu. Satır boşlukları %3.9 kalır; değişen yalnızca dış pay. */
+  --pad-shell-y: clamp(16px, 2.24dvh, 32px);
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
