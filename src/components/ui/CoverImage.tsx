@@ -20,16 +20,29 @@ export function CoverImage({
   src: string | null;
   /** `alt` metni bundan türer — iki yerde ayrı yazılmasın. */
   repo: string;
-  /** Last Project kare, ızgara geniş (DESIGN-SYSTEM §6). */
-  ratio?: "square" | "wide";
+  /**
+   * Last Project kare, ızgara geniş (DESIGN-SYSTEM §6).
+   *
+   * `fill`: en-boy oranı yok, ebeveynin verdiği kutuyu doldurur.
+   * Gerekçe dikey bütçe: `aspect-[16/7]` yüksekliği GENİŞLİKTEN türetir, yani
+   * viewport kısaldığında kapak küçülmez ve kart taşar. `fill` modunda
+   * yüksekliği ebeveyn (`min-h-0 flex-1`) belirler, görsel `object-cover` ile
+   * kırpılır — tasarım uzun ekranda korunur, kısa ekranda çökmez.
+   */
+  ratio?: "square" | "wide" | "fill";
   sizes: string;
   priority?: boolean;
 }) {
+  const shape =
+    ratio === "square"
+      ? "aspect-square shrink-0"
+      : ratio === "wide"
+        ? "aspect-[16/7] shrink-0"
+        : "h-full";
+
   return (
     <div
-      className={`bg-elevated rounded-media relative w-full shrink-0 overflow-hidden ${
-        ratio === "square" ? "aspect-square" : "aspect-[16/7]"
-      }`}
+      className={`bg-elevated rounded-media relative w-full overflow-hidden ${shape}`}
     >
       {src && (
         <Image

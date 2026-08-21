@@ -93,10 +93,8 @@ carousel indeksi ve form taslağı korunuyor.
 - [x] `layout.tsx`'te veri, ray + ana bölgeye dağıtım
       (tek kaynak olduğu için `Promise.all` gerekmedi; Faz 5'te MDX eklenince gelir)
 - [x] `api/revalidate/route.ts` — `timingSafeEqual` imza doğrulaması
-- [ ] Kapak görselleri `next/image`, `sizes` doğru
-      — `ui/CoverImage.tsx` yazıldı ama TÜKETİCİSİ YOK: kapak kullanan modüller
-      (`LastProject`, `RepoGrid`) Faz 4'te geliyor. `sizes` doğruluğu çağıranın
-      işi olduğu için madde açık bırakıldı.
+- [x] Kapak görselleri `next/image`, `sizes` doğru (Faz 4'te tüketicileriyle
+      birlikte tamamlandı)
 
 **Bitiş:** token'ı boz, dev sunucusunu yeniden başlat — site hâlâ render ediyor.
 ✅ Doğrulandı: `.env.local`'de GitHub anahtarı hiç yokken site fallback ile render
@@ -117,14 +115,30 @@ kendi grubunu doğruluyor. `hasGitHubEnv()` token yokluğunu sessiz fallback'e �
 
 ## Faz 4 — Hakkımda ve Projeler (1–2 oturum)
 
-- [ ] `/hakkimda` — Hero (`lg`) + Summary/Job History kartı
+- [x] `/hakkimda` — Hero (`lg`) + Summary/Job History kartı (`AboutBody`)
 - [ ] `config/about.ts` gerçek biyografi ve iş geçmişi
-- [ ] `/projeler` — ray **sola** geçiyor
-- [ ] `LastProject` — kare kapak, açıklama, Go to Live, rozetler, Repository ›
-- [ ] `RepoGrid` — 2'li alt grid, geniş kapaklar, sağ altta Repository ›
-- [ ] `GitHubProfile` — avatar, kullanıcı adı, repo sayısı, bio, Go to Profile
+      — **SAHİBİNİ BEKLİYOR.** Yapı ve boş durum hazır; uydurma biyografi
+      yazılmadı çünkü uydurma iş geçmişi lorem ipsum'dan beterdir.
+- [x] `/projeler` — ray **sola** geçiyor
+- [x] `LastProject` — kare kapak, açıklama, Go to Live, rozetler, Repository ›
+- [x] `RepoGrid` — 2'li alt grid, geniş kapaklar, sağ altta Repository ›
+- [x] `GitHubProfile` — avatar, kullanıcı adı, repo sayısı, bio, Go to Profile
 
 **Bitiş:** `/hakkimda` → `/projeler` geçişinde ray ekranın bir yanından diğerine kayıyor.
+
+**Faz 4'te çıkan iki gerçek hata (ikisi de üretim build'inde doğrulandı):**
+
+1. **Ana bölge dört ekranda da GÖRÜNMEZDİ.** `template.tsx` Motion'ın
+   `initial/animate`'ini kullanıyordu; Faz 3'te sayfalar `async` olunca Next
+   onları Suspense'e sardı ve akış sırasında giriş animasyonu iptal edilip bir
+   daha çalışmadı — eleman `opacity: 0`'da kaldı. Geçiş CSS'e taşındı
+   (`.deck-main-enter`, globals.css). Yan fayda: `template.tsx` artık Server
+   Component.
+2. **Çıplak `fr` satırları taşırıyordu.** `1fr` aslında `minmax(auto,1fr)`;
+   otomatik alt sınır satırın içerikten küçülmesini engelliyor. `/projeler`
+   626px'lik ana bölgeye 1071px içerik sokuyordu. Satırlar `minmax(0,…)` oldu
+   ve kapaklar yüksekliği GENİŞLİKTEN türetmeyi bıraktı (`CoverImage` `fill`
+   modu) — `aspect-[16/7]` kısa ekranda küçülemediği için kart taşıyordu.
 
 ## Faz 5 — Blog (2 oturum)
 

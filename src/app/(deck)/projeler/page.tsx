@@ -1,22 +1,30 @@
 import type { Metadata } from "next";
-import { Card } from "@/components/ui/Card";
+import { LastProject } from "@/components/modules/LastProject";
+import { RepoGrid } from "@/components/modules/RepoGrid";
+import { GitHubProfile } from "@/components/modules/GitHubProfile";
+import { getGitHub, slots } from "@/lib/github";
 
 export const metadata: Metadata = { title: "Projeler" };
 
 /**
- * Rayın SOLA geçtiği tek sayfa. Ana bölge 3 kolon:
+ * Rayın SOLA geçtiği tek sayfa (INTERACTIONS §2.3). Ana bölge 3 kolon:
  * r1 Last Project · r2 iki repo (alt grid) · r3 GitHub profil kartı.
- * Modüller Faz 4'te, veri Faz 3'te gelir.
+ *
+ * Satır oranı `1fr 1.2fr 0.9fr`: ortadaki satır kapak görselleri yüzünden
+ * en çok yeri isteyen satır.
  */
-export default function ProjelerPage() {
+export default async function ProjelerPage() {
+  const github = await getGitHub();
+  const { last, grid } = slots(github.repos);
+
   return (
-    <div className="grid min-h-0 flex-1 grid-rows-[1fr_1.2fr_0.9fr] gap-(--gap-row)">
-      <Card title="Last Project." size="lg" as="h1" />
-      <div className="grid min-h-0 grid-cols-2 gap-(--gap-col)">
-        <Card size="md" />
-        <Card size="md" />
-      </div>
-      <Card size="lg" />
+    // `minmax(0,…)` şart: çıplak `1fr` aslında `minmax(auto,1fr)` demek ve
+    // otomatik alt sınır satırın içeriğinden küçülmesini engelliyor — kartlar
+    // ana bölgenin dışına taşıyordu.
+    <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)] gap-(--gap-row)">
+      <LastProject project={last} />
+      <RepoGrid projects={grid} />
+      <GitHubProfile profile={github.profile} />
     </div>
   );
 }

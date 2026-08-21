@@ -139,6 +139,38 @@ body {
   grid-template-rows: var(--deck-rows);
 }
 
+/**
+ * Ana bölge giriş geçişi (INTERACTIONS §3.5) — `(deck)/template.tsx`.
+ *
+ * Bilinçli olarak CSS: Motion ile yazıldığında, sayfalar `async` olup Suspense'e
+ * sarılınca animasyon akış sırasında iptal ediliyor ve eleman `opacity: 0`'da
+ * takılı kalıyordu. CSS animasyonunu React'in yeniden render'ı iptal edemez.
+ *
+ * `both` fill şart: 80 ms'lik gecikme boyunca eleman `from` durumunda kalsın,
+ * önce görünüp sonra kaybolmasın.
+ */
+@keyframes deck-main-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.deck-main-enter {
+  animation: deck-main-enter var(--dur-swap) var(--ease-out) 80ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-main-enter {
+    animation-duration: 0.01ms;
+    animation-delay: 0s;
+  }
+}
+
 @media (max-height: 799px), (max-width: 1023px) {
   .deck-viewport {
     height: auto;

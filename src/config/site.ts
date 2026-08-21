@@ -73,6 +73,11 @@ export const COPY = {
     more: "More",
     empty: "No project to show here yet — the code lives on GitHub.",
     goTo: "Live",
+    // `/projeler` ana bölgesi (Faz 4)
+    last: "Last Project.",
+    repository: "Repository",
+    repoCount: "Repository",
+    profile: "Profile",
   },
   writings: {
     title: "Writings.",
@@ -112,6 +117,16 @@ export const COPY = {
     detailLead: "Subscribed for next writing",
     submit: "Enter.",
     success: "Kayıt tamam. İlk yazıda görüşürüz.",
+  },
+  /**
+   * `/hakkimda` ana bölgesi. Başlıklar tasarımdan ve NOKTASIZ — nokta kuralı
+   * kart başlıklarına ait, sayfa içi `<h2>`'lere değil.
+   */
+  about: {
+    summary: "Summary",
+    jobHistory: "Job History",
+    label: "Hakkımda içeriği",
+    empty: "Biyografi yakında — `config/about.ts` doldurulmayı bekliyor.",
   },
   nav: { resume: "Resume" },
   footer: { rights: "All rights reserved." },
