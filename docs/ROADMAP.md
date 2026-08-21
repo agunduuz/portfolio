@@ -87,14 +87,33 @@ carousel indeksi ve form taslağı korunuyor.
 
 ## Faz 3 — GitHub verisi (1 oturum)
 
-- [ ] `lib/github.ts` — tek GraphQL sorgusu (profil + repo'lar), Zod parse
-- [ ] `revalidate: 3600` + `tags: ["github"]`
-- [ ] Fallback, filtreleme, sıralama, slot dağılımı
-- [ ] `layout.tsx`'te `Promise.all` ile veri, ray + ana bölgeye dağıtım
-- [ ] `api/revalidate/route.ts` — `timingSafeEqual` imza doğrulaması
+- [x] `lib/github.ts` — tek GraphQL sorgusu (profil + repo'lar), Zod parse
+- [x] `revalidate: 3600` + `tags: ["github"]`
+- [x] Fallback, filtreleme, sıralama, slot dağılımı
+- [x] `layout.tsx`'te veri, ray + ana bölgeye dağıtım
+      (tek kaynak olduğu için `Promise.all` gerekmedi; Faz 5'te MDX eklenince gelir)
+- [x] `api/revalidate/route.ts` — `timingSafeEqual` imza doğrulaması
 - [ ] Kapak görselleri `next/image`, `sizes` doğru
+      — `ui/CoverImage.tsx` yazıldı ama TÜKETİCİSİ YOK: kapak kullanan modüller
+      (`LastProject`, `RepoGrid`) Faz 4'te geliyor. `sizes` doğruluğu çağıranın
+      işi olduğu için madde açık bırakıldı.
 
 **Bitiş:** token'ı boz, dev sunucusunu yeniden başlat — site hâlâ render ediyor.
+✅ Doğrulandı: `.env.local`'de GitHub anahtarı hiç yokken site fallback ile render
+ediyor, Projects kartı `featured-projects.ts` verisini gösteriyor.
+
+**Private projeler (Faz 3 eki).** `config/private-projects.ts` — elle küratörlük,
+opt-in. GitHub API'sinden private repo ÇEKİLMİYOR; sebebi opt-out modelin private
+veri için yanlış varsayılan olması (bir `portfolio-hidden` unutulursa yayına çıkar).
+API zaten işe yaramazdı: private repo'nun kapak görseli jenerik placeholder olarak
+gelir ve repo linki ziyaretçide 404 verir (ikisi de ölçüldü). Kartta "Private"
+etiketi çıkar, `url` null olduğu için "Repository ›" render edilmez. Public
+projelerle aynı listede sıralanır.
+
+**Faz 3 notu — `env.server.ts` faz faz bölündü.** Önceki hâli yedi sırrı tek şemada
+doğruluyordu; bu, GitHub verisini çekmek için Resend ve Upstash anahtarı istemek
+demekti. Artık `githubEnv()` ve `mailEnv()` ayrı; bir grubu okuyan modül yalnızca
+kendi grubunu doğruluyor. `hasGitHubEnv()` token yokluğunu sessiz fallback'e çeviriyor.
 
 ## Faz 4 — Hakkımda ve Projeler (1–2 oturum)
 

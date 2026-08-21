@@ -1,6 +1,6 @@
 import { Card, type CardSize } from "@/components/ui/Card";
 import { Carousel } from "@/components/ui/Carousel";
-import { ArrowLink, GoTo } from "@/components/ui/Link";
+import { ArrowLink, GoTo, PrivateTag } from "@/components/ui/Link";
 import { TechBadges } from "@/components/ui/TechBadges";
 import { COPY } from "@/config/site";
 import type { TechId } from "@/config/tech-icons";
@@ -16,6 +16,8 @@ export type ProjectItem = {
   /** Boşsa "Go to Live" satırı hiç çıkmaz — tıklanamayan link göstermeyiz. */
   liveUrl: string | null;
   tech: readonly TechId[];
+  /** Private projede repo linki yoktur; yerine "Private" etiketi çıkar. */
+  isPrivate: boolean;
 };
 
 /**
@@ -52,7 +54,15 @@ export function ProjectsCard({
 function Slide({ project }: { project: ProjectItem }) {
   return (
     <article className="flex flex-col gap-2">
-      <h4 className="text-h-item text-accent font-mono">{project.name}</h4>
+      {/*
+        Uydu kartta zaten "Repository ›" yok (o /projeler modüllerinde).
+        Bu yüzden etiket adın yanına oturuyor — kartta repo linki aramaya
+        başlamadan önce projenin private olduğunu görsün.
+      */}
+      <div className="flex flex-wrap items-center gap-2">
+        <h4 className="text-h-item text-accent font-mono">{project.name}</h4>
+        {project.isPrivate && <PrivateTag />}
+      </div>
 
       {project.description && (
         <p className="text-body text-text-2 line-clamp-3">

@@ -52,6 +52,23 @@ export function GoTo({
 }
 
 /**
+ * Private projelerde `Repository ›` linkinin yerini alır.
+ *
+ * Link değil, etiket: private repo sayfası ziyaretçide 404 verir. Boş bırakmak
+ * yerine sebebini söylüyoruz — kullanıcı linkin neden bazı kartlarda olup
+ * bazılarında olmadığını anlasın.
+ */
+export function PrivateTag({ className = "" }: { className?: string }) {
+  return (
+    <span
+      className={`text-micro text-text-3 border-border rounded-inner border px-2 py-0.5 ${className}`}
+    >
+      Private
+    </span>
+  );
+}
+
+/**
  * `More ›` · `Repository ›` · `Detail ›` — kart altında ortalanmış alt link.
  * Ok hover'da 2px kayar; `group` sınıfı bunun için.
  */

@@ -48,18 +48,29 @@ export function Carousel({
   const multiple = count > 1;
 
   return (
-    <div
-      onKeyDown={onKeyDown}
-      className="flex min-h-0 flex-1 items-center gap-1"
-    >
+    // `items-center` YOK (varsayılan `stretch` bırakıldı): ortalama, sığmayan
+    // bir slaytı satırın DIŞINA yukarı doğru taşırıyor ve içerik kart başlığının
+    // üstüne biniyordu. `stretch` ile içerik kutusu satır yüksekliğine
+    // kilitlenir, kendi `overflow-hidden`'ı da alt taraftan düzgün kırpar.
+    // Oklar bunun yerine tek tek `self-center` alır.
+    <div onKeyDown={onKeyDown} className="flex min-h-0 flex-1 gap-1">
       {multiple && (
         <Arrow direction="prev" label={label} onClick={() => go(-1)} />
       )}
 
+      {/*
+        `justify-start` + `overflow-hidden` bilinçli.
+
+        Önce `justify-center` yazılmıştı; uzun bir slayt (iki satıra saran ad +
+        üç satır açıklama + rozetler) sığmayınca taşmayı YUKARI VE AŞAĞI birden
+        yayıyor, içerik kartın başlığının üstüne biniyordu. Üstelik tasarımda
+        içerik zaten ortalanmış değil — başlığın hemen altından başlıyor
+        (design/home.png: kart 584–884, repo adı 690).
+      */}
       <div
         aria-live="polite"
         aria-atomic="true"
-        className="flex min-h-0 flex-1 flex-col justify-center"
+        className="flex min-h-0 flex-1 flex-col justify-start overflow-hidden"
       >
         {children[index]}
       </div>
@@ -87,7 +98,7 @@ function Arrow({
       type="button"
       onClick={onClick}
       aria-label={`${direction === "prev" ? "Önceki" : "Sonraki"} — ${label}`}
-      className="text-text-3 hover:text-text focus-visible:ring-accent focus-visible:ring-offset-surface rounded-inner -mx-2 flex size-10 shrink-0 cursor-pointer items-center justify-center transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      className="text-text-3 hover:text-text focus-visible:ring-accent focus-visible:ring-offset-surface rounded-inner -mx-2 flex size-10 shrink-0 cursor-pointer items-center justify-center self-center transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
     >
       <Icon aria-hidden className="size-4" />
     </button>
