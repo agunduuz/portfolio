@@ -17,7 +17,7 @@ export function Nav() {
       aria-label="Ana gezinti"
       className="bg-surface border-border rounded-card h-(--h-nav) shrink-0 border"
     >
-      <div className="flex h-full items-center justify-between px-pad-card">
+      <div className="px-pad-card flex h-full items-center justify-between">
         <ul className="flex items-center gap-8">
           {NAV.map(({ href, label }) => {
             const active =
@@ -42,7 +42,7 @@ export function Nav() {
         <a
           href={SITE.resume}
           download
-          className="bg-elevated border-border-strong text-text text-label hover:bg-surface-hover focus-visible:ring-accent focus-visible:ring-offset-surface flex items-center gap-2 rounded-inner border px-4 py-2.5 transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="bg-elevated border-border-strong text-text text-label hover:bg-surface-hover focus-visible:ring-accent focus-visible:ring-offset-surface rounded-inner flex items-center gap-2 border px-4 py-2.5 transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <Download aria-hidden className="size-4" />
           {COPY.nav.resume}

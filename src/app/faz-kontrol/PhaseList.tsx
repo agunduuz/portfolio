@@ -102,7 +102,7 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="border-border bg-surface flex flex-wrap items-center gap-x-5 gap-y-3 rounded-card border p-6">
+      <header className="border-border bg-surface rounded-card flex flex-wrap items-center gap-x-5 gap-y-3 border p-6">
         <div className="mr-auto">
           <h1 className="font-display text-h-card text-text">Faz Kontrol</h1>
           <p className="text-micro text-text-3 mt-1">
@@ -139,7 +139,7 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
         return (
           <section
             key={phase.number}
-            className="border-border bg-surface overflow-hidden rounded-card border"
+            className="border-border bg-surface rounded-card overflow-hidden border"
           >
             <h2>
               <button
@@ -149,10 +149,8 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
                 className="hover:bg-surface-hover focus-visible:ring-accent focus-visible:ring-offset-bg flex w-full cursor-pointer items-center gap-4 px-6 py-4 text-left transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               >
                 <span
-                  className={`font-mono text-label grid h-7 min-w-11 shrink-0 place-items-center rounded-inner px-2 tabular-nums ${
-                    complete
-                      ? "bg-accent text-bg"
-                      : "bg-elevated text-text-2"
+                  className={`text-label rounded-inner grid h-7 min-w-11 shrink-0 place-items-center px-2 font-mono tabular-nums ${
+                    complete ? "bg-accent text-bg" : "bg-elevated text-text-2"
                   }`}
                 >
                   {phase.number}
@@ -163,9 +161,7 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
                     {phase.title}
                   </span>
                   {phase.meta && (
-                    <span className="text-micro text-text-3">
-                      {phase.meta}
-                    </span>
+                    <span className="text-micro text-text-3">{phase.meta}</span>
                   )}
                 </span>
 
@@ -208,12 +204,14 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
                       <button
                         type="button"
                         onClick={() => toggle(item.line, item.text)}
-                        className="hover:bg-surface-hover focus-visible:ring-accent focus-visible:ring-offset-surface text-body flex w-full cursor-pointer items-start gap-3 rounded-inner px-2 py-1.5 text-left transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                        className="hover:bg-surface-hover focus-visible:ring-accent focus-visible:ring-offset-surface text-body rounded-inner flex w-full cursor-pointer items-start gap-3 px-2 py-1.5 text-left transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                       >
                         <Check done={item.done} />
                         <span
                           className={
-                            item.done ? "text-text-3 line-through" : "text-text-2"
+                            item.done
+                              ? "text-text-3 line-through"
+                              : "text-text-2"
                           }
                         >
                           <Inline>{item.text}</Inline>

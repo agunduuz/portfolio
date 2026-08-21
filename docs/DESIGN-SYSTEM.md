@@ -170,14 +170,27 @@ alanıdır. Tasarım kararı oran; piksel, o oranın 1426'daki izdüşümüdür.
 
 Gerçek bir 1920×1080 monitörde tarayıcı kromundan sonra ~950px viewport kalır. Mutlak
 pikseller korunursa sabit kabuk (nav 140 + footer 140 + boşluklar + padding = 469px)
-grid'e 480px bırakır ve Job Offers kartı (iki satırda ~410px) sığmaz. Oran korunursa sığar.
+grid'e 480px bırakır ve Job Offers kartı (iki satırda ~410px) sığmaz. Oran korunursa
+grid ~640px'e çıkar.
+
+> **Faz 2 düzeltmesi — "oran korunursa sığar" cümlesi fazla iyimserdi.** Oran
+> korunduğunda Job Offers kartı ~400px alıyor; içeriği (dört etiketli alan +
+> buton) ~440px istiyor. Kutu oranla küçülüyor, içerik `rem` olduğu için
+> küçülmüyor. Gerçek eşikler aşağıdaki tabloda ölçüldü.
 
 ```css
 --h-nav: clamp(84px, 9.82dvh, 150px);
 --h-footer: clamp(72px, 9.82dvh, 150px);
 --gap-row: clamp(28px, 3.9dvh, 56px);
 --gap-field: clamp(10px, 1.4dvh, 18px); /* form alanları arası */
+--pad-shell-y: clamp(16px, 2.24dvh, 32px); /* kabuğun DIŞ dikey payı */
 ```
+
+> **Faz 2 düzeltmesi.** Kabuğun dış dikey payı `--gap-row` değildir. Ölçüm
+> (design/home.png): nav y=32'de başlıyor, footer y=1394'te bitiyor → 32/1426 =
+> **%2.24**, satır boşluğunun (%3.9) yarısından az. İkisi aynı token'la
+> yazıldığında 842px'lik bir viewport'ta 28px fazladan yeniyor ve Hero kartı
+> içeriğini kırpıyordu. Satır boşlukları %3.9 kaldı; ayrışan yalnızca dış pay.
 
 `clamp()` uçlarda saçmalamayı önler: 2160px monitörde nav 212px olmaz, 800px'te 78px'in
 altına inmez.
@@ -185,6 +198,22 @@ altına inmez.
 Satır yükseklikleri `dvh` ile yazılmaz; grid template oranı taşır:
 `grid-template-rows: 21fr 21fr 17fr` (anasayfada hero için `1.15fr 1fr 1fr`).
 Kalan alanı grid kendisi böler.
+
+**Dikey bütçe — Faz 2'de ölçülen gerçek (önemli):**
+
+Tipografi `rem`, kabuk `dvh`. Yani viewport küçüldükçe kutular küçülür ama içerik
+küçülmez. Anasayfada bunun iki eşiği var (ölçülen, tahmin değil):
+
+| Ne                    | Tam sığdığı viewport | Altında ne olur                 |
+| --------------------- | -------------------- | ------------------------------- |
+| Hero kartı            | ≈ 870px              | son satır birkaç px kırpılır    |
+| Job Offers dört alanı | ≈ 1000px             | alanlar kart içinde scroll eder |
+
+1080p bir monitörde viewport ≈ 900–950px olduğu için **Job Offers alanları
+normal şartlarda kart içinde scroll eder.** Bu bir bug değil, kırmızı çizgi 1'in
+öngördüğü davranış: sayfa değil kartın içi scroll eder. "Send the Offer." butonu
+scroll alanının dışında, tabana çakılıdır — kullanıcının göremediği buton,
+olmayan butondur.
 
 **Kritik sınır — pazarlığa kapalı:**
 `dvh` yalnızca kabuk kromunda kullanılır (nav, footer, satır boşlukları, form alan aralığı).
@@ -277,16 +306,28 @@ Kart başlığı **ortalanmış**, gövde sola hizalı. Alt linkler (`More ›`,
 Tüm tıklanabilirler: `cursor-pointer`, min 40×40px hit alanı, `--dur-micro` geçiş,
 `focus-visible` ring. Disabled: `opacity-40 cursor-not-allowed`.
 
+Primary butonun grisi ölçüldü: `--color-button: #999999`, metin beyaz.
+
 **Input**
 
 ```
-bg-elevated  border border-border  rounded-[--radius-inner]  px-3 py-2.5
+bg-field  border border-field-border  rounded-[--radius-inner]  px-3 py-2
 placeholder:text-text-3  focus:border-accent focus:ring-1 focus:ring-accent
 ```
 
 Alanlar arası boşluk `--gap-field`. Hata: `border-danger` + altta `text-danger text-micro`
 
 - `aria-describedby`.
+
+> **Faz 2 ölçüm tutanağı (design/home.png).** Bu bölümün önceki reçetesi
+> `bg-elevated` + `border-border` diyordu; ikisi de tasarımla uyuşmuyor.
+> Piksel örneklemesi: input zemini **#1b1b1b**, yani kart yüzeyinden (#242424)
+> KOYU — alan yükseltilmiş değil, **çukur**. Kenarlık `--color-border`'ın
+> saydam beyazı değil, tam **#999999** 1px. Figma bağlayıcı olduğu için
+> `--color-field` ve `--color-field-border` token'ları eklendi.
+>
+> `py` 2.5'ten 2'ye indi: Job Offers kartı dört alan + butonu 1080p'de
+> sığdıramıyordu (aşağıdaki dikey bütçe notu).
 
 **Teknoloji rozetleri** (`TechBadges`)
 

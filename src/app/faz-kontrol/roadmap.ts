@@ -150,8 +150,7 @@ export async function readRoadmap(): Promise<Roadmap> {
 }
 
 export type ToggleResult =
-  | { ok: true; done: boolean }
-  | { ok: false; error: string };
+  { ok: true; done: boolean } | { ok: false; error: string };
 
 /**
  * Tek bir maddenin işaretini çevirir.

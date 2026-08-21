@@ -16,7 +16,7 @@ export function DeckShell({ children }: { children: ReactNode }) {
     <div className="deck-viewport px-pad-shell">
       <div
         id="deck-shell"
-        className="mx-auto flex h-full max-w-(--shell-max) flex-col gap-(--gap-row) py-(--gap-row)"
+        className="mx-auto flex h-full max-w-(--shell-max) flex-col gap-(--gap-row) py-(--pad-shell-y)"
       >
         <Nav />
         {children}

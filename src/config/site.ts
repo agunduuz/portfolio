@@ -1,4 +1,5 @@
 import { publicEnv } from "@/lib/env";
+import type { BrandId } from "./brand-icons";
 
 /**
  * `email` bilinçli olarak burada sabit: sayfada `mailto:` olarak görünür, yani
@@ -6,6 +7,33 @@ import { publicEnv } from "@/lib/env";
  * adres) `lib/env.server.ts` içinde ayrı durur.
  */
 const CONTACT = "anil.gundduz@gmail.com";
+
+/**
+ * `satisfies` burada bilinçli: `icon` bir `BrandId` olmak zorunda, yoksa
+ * `BrandIcon` çalışma anında patlardı. Yeni sosyal hesap eklerken önce
+ * `config/brand-icons.ts`'e glifi kopyala — tip hatası bunu hatırlatır.
+ */
+const SOCIALS = [
+  { name: "GitHub", url: "https://github.com/agunduuz", icon: "github" },
+  {
+    name: "LinkedIn",
+    url: "https://linkedin.com/in/anilgunduuz",
+    icon: "linkedin",
+  },
+  { name: "X", url: "https://x.com/frontendanil", icon: "x" },
+  { name: "Medium", url: "https://medium.com/@anilgunduz", icon: "medium" },
+  {
+    name: "Instagram",
+    url: "https://instagram.com/frontendanil",
+    icon: "instagram",
+  },
+  {
+    name: "Upwork",
+    url: "https://upwork.com/freelancers/anilgunduz",
+    icon: "upwork",
+  },
+  { name: "Mail", url: `mailto:${CONTACT}`, icon: "mail" },
+] as const satisfies readonly { name: string; url: string; icon: BrandId }[];
 
 export const SITE = {
   name: "Anıl Gündüz",
@@ -15,27 +43,7 @@ export const SITE = {
   email: CONTACT,
   resume: "/anil-gunduz-cv.pdf",
   careerStart: publicEnv.NEXT_PUBLIC_CAREER_START,
-  socials: [
-    { name: "GitHub", url: "https://github.com/agunduuz", icon: "github" },
-    {
-      name: "LinkedIn",
-      url: "https://linkedin.com/in/anilgunduuz",
-      icon: "linkedin",
-    },
-    { name: "X", url: "https://x.com/frontendanil", icon: "x" },
-    { name: "Medium", url: "https://medium.com/@anilgunduz", icon: "medium" },
-    {
-      name: "Instagram",
-      url: "https://instagram.com/frontendanil",
-      icon: "instagram",
-    },
-    {
-      name: "Upwork",
-      url: "https://upwork.com/freelancers/anilgunduz",
-      icon: "upwork",
-    },
-    { name: "Mail", url: `mailto:${CONTACT}`, icon: "mail" },
-  ],
+  socials: SOCIALS,
 } as const;
 
 export const DECK = ["/", "/hakkimda", "/projeler", "/blog"] as const;
@@ -56,8 +64,22 @@ export const COPY = {
     title: "Developer. Improver.",
     bio: "I enjoy creating websites using new technologies. I see each task as a challenge for myself. Through these tasks, I can learn new things and reinforce what I already know.",
   },
-  projects: { title: "Projects.", more: "More" },
-  writings: { title: "Writings.", more: "More" },
+  /**
+   * Boş durum bir davettir, bir özür değil (CONTENT-MODEL §8). Bu metinler
+   * GitHub gerçekten boş dönerse veya henüz yazı yoksa görünür.
+   */
+  projects: {
+    title: "Projects.",
+    more: "More",
+    empty: "No project to show here yet — the code lives on GitHub.",
+    goTo: "Live",
+  },
+  writings: {
+    title: "Writings.",
+    more: "More",
+    empty: "First writing is on its way. Subscribe and I'll let you know.",
+    goTo: "Writing.",
+  },
   aboutMe: {
     title: "About Me.",
     statusPrefix: "I'm working right now about",
@@ -73,6 +95,12 @@ export const COPY = {
       type: "What is your job type?",
       technology: "What is your base technology?",
       amount: "What is your offer amount?",
+    },
+    placeholders: {
+      location: "Enter the location.",
+      type: "Enter the type.",
+      technology: "Enter the technology.",
+      amount: "Enter the amount.",
     },
     submit: "Send the Offer.",
     pending: "Sending…",
