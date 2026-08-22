@@ -1,0 +1,94 @@
+---
+title: "CSS Grid'de 1fr Neden Taşar"
+description: "grid-template-rows: 1fr yazdığınızda satır içeriğinden küçülmez. Sebebi fr'nin gizli alt sınırı ve çözümü minmax(0, 1fr)."
+excerpt: "1fr aslında minmax(auto, 1fr) demek. Bu gizli auto, satırın içeriğinden küçülmesini engelliyor — ve kartlarınız kutunun dışına taşıyor."
+date: 2026-08-20
+tags: ["css", "grid", "layout"]
+featured: true
+draft: false
+lang: "tr"
+---
+
+Sabit yükseklikli bir ekran tasarlıyordum: nav, üç satırlık bir içerik ızgarası,
+footer. Hepsi `100dvh` içine sığacak, sayfa asla scroll etmeyecek. Izgarayı
+yazdım:
+
+```css
+grid-template-rows: 1fr 1.2fr 0.9fr;
+```
+
+Üç satır, oranları belli. Beklentim açık: kullanılabilir yüksekliği 3.1'e böl,
+her satıra payını ver. 1080p'de çalıştı. Sonra pencereyi küçülttüm ve en alttaki
+kart footer'ın altına düştü.
+
+## Beklenti ile gerçek arasındaki fark
+
+Ölçtüm: ana bölge **626px**, içine yerleşen ızgara **1071px**. Neredeyse iki katı.
+Oysa `fr` birimi tam olarak bunu engellemek için var — mevcut alanı paylaştırmak
+için.
+
+Sorun `fr`'nin ne anlama geldiğini yanlış bilmemdi. Spesifikasyona göre
+`grid-template-rows: 1fr` şunun kısaltması:
+
+```css
+grid-template-rows: minmax(auto, 1fr);
+```
+
+O `auto` bir **alt sınır**. Satırın en fazla `1fr` kadar büyüyeceğini söylüyor,
+ama en az içeriğinin doğal yüksekliği kadar olacağını da söylüyor. İkisi
+çakıştığında alt sınır kazanır. Yani `fr` bir tavan, taban değil.
+
+İçerik 400px istiyorsa ve payına 200px düşüyorsa, satır 400px olur. Izgara
+konteynerin dışına taşar ve `overflow: hidden` varsa içerik sessizce kırpılır —
+ki bu daha kötüsü, çünkü hata görünmez.
+
+## Çözüm
+
+Alt sınırı elle sıfırlayın:
+
+```css
+grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 0.9fr);
+```
+
+Artık satır içeriğinden küçülebilir. Kartlar payına düşen alanı alır ve içeride
+ne yapacaklarına kendileri karar verir: kırpar, `line-clamp` uygular ya da kendi
+içlerinde scroll eder.
+
+Aynı tuzak flexbox'ta da var, orada adı `min-height: 0`:
+
+```css
+.card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0; /* olmazsa flex child'ı içeriğinden küçülmez */
+}
+```
+
+`flex: 1` de tek başına yetmez, çünkü flex item'ın varsayılan `min-height`
+değeri de `auto`. Aynı hikâye, farklı özellik adı.
+
+## Nasıl fark edilir
+
+Bu hata sessizdir. Sayfa uzun ekranda düzgün görünür, kısa ekranda bozulur — ve
+`overflow: hidden` varsa "bozulma" bile görünmez, içerik sadece yok olur.
+
+En hızlı teşhis konsoldan:
+
+```js
+document.querySelectorAll("section").forEach((el) => {
+  const box = Math.round(el.getBoundingClientRect().height);
+  const need = el.scrollHeight;
+  if (need > box) console.warn(el, `${need - box}px taşıyor`);
+});
+```
+
+`scrollHeight` içeriğin istediği yükseklik, `getBoundingClientRect().height`
+kutunun gerçek yüksekliği. Aradaki fark kaybettiğiniz piksellerdir.
+
+## Çıkarım
+
+`fr` "bu kadar yer kapla" demiyor, "en fazla bu kadar yer kapla, ama içeriğin
+sığdığı kadar da küçülme" diyor. Sabit yükseklikli bir düzen kuruyorsanız —
+dashboard, sunum, kiosk, `100dvh` bir sayfa — `minmax(0, 1fr)` varsayılanınız
+olsun. Sıradan bir sayfada fark etmezsiniz, çünkü sayfa zaten uzayabilir. Fark
+ettiğiniz yerde de iş işten geçmiş olur.

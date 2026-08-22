@@ -142,17 +142,28 @@ kendi grubunu doğruluyor. `hasGitHubEnv()` token yokluğunu sessiz fallback'e �
 
 ## Faz 5 — Blog (2 oturum)
 
-- [ ] `lib/mdx.ts` — frontmatter Zod şeması, `getAllPosts`, `getPost`
+- [x] `lib/mdx.ts` — frontmatter Zod şeması, `getAllPosts`, `getPost`
 - [ ] 3 örnek MDX yazısı (gerçek içerik, lorem yok)
-- [ ] `/blog` — `LastWriting` + `PostList` (3 kart) + `Pagination`
-- [ ] Sayfalama `?page=N`, sınır dışı → `notFound()`
+      — **2 yazı var, SAHİBİ GÖZDEN GEÇİRMELİ.** İkisi de bu projede gerçekten
+      ölçülmüş bulgular üzerine yazıldı (`minmax(0,1fr)` taşması, Suspense
+      içinde ölen Motion animasyonu). İçerik doğru ama **künye Anıl'ın**;
+      yayından önce kendi sesiyle yeniden yazılmalı ya da silinmeli.
+- [x] `/blog` — `LastWriting` + `PostList` (3 kart) + `Pagination`
+- [x] Sayfalama `?page=N`, sınır dışı → `notFound()`
+      (bozuk girdi `?page=abc` 1. sayfaya düşer, 404 vermez — yalnızca
+      sınır dışı SAYI 404'tür)
 - [ ] `/blog/[slug]` — makale kartı, `data-scrollable`
 - [ ] `useProxiedWheel` — sayfa geneli wheel makaleye yönleniyor
 - [ ] `ReadingProgress` — kart scroll'una bağlı
 - [ ] `Esc` ile `/blog`'a dönüş, deck kapalı
 - [ ] İçindekiler, kod blokları + kopyala, prev/next
 - [ ] `?reader=1` tam ekran okuma modu (>2000 kelime)
-- [ ] `not-found.tsx` + `error.tsx`
+- [x] `not-found.tsx` + `error.tsx` (kök seviyede, deck kabuğunun dışında —
+      bulunamayan bir sayfada altı uydu kart göstermek gürültü olurdu)
+
+**Faz 5 — kalan yarı (yazı detayı).** Yukarıdaki işaretsiz maddeler bir sonraki
+oturumun işi. `getPost` ve `PostWithBody` hazır bekliyor; eksik olan render
+katmanı ve `/blog/[slug]` etkileşimleri.
 
 ## Faz 6 — Formlar (1 oturum)
 

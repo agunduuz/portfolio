@@ -84,6 +84,9 @@ export const COPY = {
     more: "More",
     empty: "First writing is on its way. Subscribe and I'll let you know.",
     goTo: "Writing.",
+    // `/blog` ana bölgesi (Faz 5)
+    last: "Last Writing.",
+    detail: "Detail",
   },
   aboutMe: {
     title: "About Me.",

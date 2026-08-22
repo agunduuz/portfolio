@@ -1,0 +1,134 @@
+---
+title: "Suspense İçinde Ölen Giriş Animasyonu"
+description: "Next.js App Router'da bir sayfayı async yapmak, üzerindeki Motion giriş animasyonunu sessizce iptal edip içeriği görünmez bırakabiliyor."
+excerpt: "Sayfayı async yaptım, ertesi gün bütün ekranlar boş açıldı. Sebep hydration değildi: animasyon başladı, Suspense araya girdi ve bir daha bitmedi."
+date: 2026-08-22
+tags: ["nextjs", "react", "motion"]
+featured: false
+draft: false
+lang: "tr"
+---
+
+Bir route geçiş animasyonu yazmıştım. `template.tsx` her navigasyonda yeniden
+mount olduğu için animasyonun her seferinde çalışmasına ideal yer:
+
+```tsx
+"use client";
+
+export default function Template({ children }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.38 }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+```
+
+Haftalarca çalıştı. Sonra veri katmanını bağladım ve sayfalar `async` oldu:
+
+```tsx
+export default async function Page() {
+  const data = await getData();
+  return <Content data={data} />;
+}
+```
+
+Ertesi gün dört ekranın dördü de boş açıldı. Nav vardı, footer vardı, kenardaki
+kartlar duruyordu. Ortadaki her şey yoktu.
+
+## Yanlış teşhis
+
+İlk şüphem hydration hatası oldu. Konsolda gerçekten bir uyarı vardı — ama
+`cz-shortcut-listen` attribute'ü hakkındaydı, yani bir tarayıcı eklentisinin
+`<body>`'ye eklediği şey. Alakasız.
+
+İkinci şüphem dev sunucusunun bayatlaması oldu. Uzun süredir açıktı, epey Fast
+Refresh yemişti. Üretim build'i alıp `next start` ile çalıştırdım. Aynı sonuç.
+Yani gerçek bir hataydı.
+
+DOM'a baktığımda içerik yerindeydi:
+
+```
+main rect: 554,147,950,626 | children=1 | sections=4
+```
+
+Kutu doğru yerde, doğru boyutta, dört kart içinde. Sonra hesaplanmış stile
+baktım:
+
+```
+opacity: 0 | transform: matrix(1, 0, 0, 1, 0, 16)
+```
+
+`opacity: 0` ve `translateY(16px)`. Bunlar tam olarak `initial` değerleri.
+Animasyon başlamış, ama bitmemişti. Saniyeler sonra bile.
+
+## Neden
+
+Bir sayfa bileşenini `async` yaptığınızda Next onu bir Suspense sınırının
+arkasına koyar ve HTML'i akıtarak gönderir. `template.tsx` istemci bileşeni
+olduğu için önce mount olur; Motion `initial` durumunu uygular ve animasyonu
+kuyruğa alır. Ardından React askıya alınan alt ağacı çözüp yeniden render eder.
+
+O yeniden render sırasında animasyon iptal ediliyor — ve yeniden
+başlatılmıyor. Motion açısından her şey normal: `animate` propu değişmedi,
+yapacak yeni bir iş yok. Eleman `initial` durumunda donup kalıyor.
+
+Kritik nokta: bu bir hata mesajı üretmiyor. Konsol temiz, build temiz,
+TypeScript temiz. Sadece içerik görünmüyor.
+
+## Çözüm
+
+Animasyonu JavaScript'ten CSS'e taşıdım:
+
+```css
+@keyframes main-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.main-enter {
+  animation: main-enter 380ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
+}
+```
+
+```tsx
+// artık "use client" yok
+export default function Template({ children }) {
+  return <div className="main-enter">{children}</div>;
+}
+```
+
+CSS animasyonunu React'in yeniden render'ı iptal edemez. Eleman DOM'a girdiği an
+tarayıcı animasyonu başlatır ve bitirir; React'in o ağacı kaç kez yeniden
+değerlendirdiği tarayıcıyı ilgilendirmez.
+
+`both` fill mode'u önemli: 80ms'lik gecikme boyunca eleman `from` durumunda
+kalsın, önce görünüp sonra kaybolmasın.
+
+Yan fayda, bileşenin artık Server Component olması. Bir istemci bileşeni ve onun
+taşıdığı animasyon kütüphanesi paketten düştü.
+
+## Çıkarım
+
+Mount anında bir kez çalışan giriş animasyonları için CSS, JS'ten daha
+dayanıklı. JS animasyonu React'in yaşam döngüsüne bağlıdır; Suspense, streaming
+ve yeniden render araya girebilir. CSS animasyonu tarayıcıya aittir ve bu
+katmandan etkilenmez.
+
+JavaScript animasyonunu gerçekten gerektiren şeyler var — bu projede uydu rayın
+`layout` animasyonu gibi, iki farklı konum arasında FLIP hesabı isteyen işler.
+Ama "mount olunca sol"? Onun için `@keyframes` yeter.
+
+Ve daha genel bir ders: içeriğin görünmediği bir hatada önce DOM'da olup
+olmadığına bakın. Oradaysa sorun veri katmanında değil, stil katmanındadır — ve
+`opacity: 0` aramak, veriyi debug etmekten çok daha hızlıdır.
