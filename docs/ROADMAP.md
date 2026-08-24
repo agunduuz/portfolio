@@ -152,18 +152,21 @@ kendi grubunu doğruluyor. `hasGitHubEnv()` token yokluğunu sessiz fallback'e �
 - [x] Sayfalama `?page=N`, sınır dışı → `notFound()`
       (bozuk girdi `?page=abc` 1. sayfaya düşer, 404 vermez — yalnızca
       sınır dışı SAYI 404'tür)
-- [ ] `/blog/[slug]` — makale kartı, `data-scrollable`
-- [ ] `useProxiedWheel` — sayfa geneli wheel makaleye yönleniyor
-- [ ] `ReadingProgress` — kart scroll'una bağlı
-- [ ] `Esc` ile `/blog`'a dönüş, deck kapalı
-- [ ] İçindekiler, kod blokları + kopyala, prev/next
-- [ ] `?reader=1` tam ekran okuma modu (>2000 kelime)
+- [x] `/blog/[slug]` — makale kartı, `data-scrollable`
+- [x] `useProxiedWheel` — sayfa geneli wheel makaleye yönleniyor
+- [x] Okuma ilerleme çubuğu — kart scroll'una bağlı (`ArticleShell`)
+- [x] `Esc` ile `/blog`'a dönüş, deck kapalı
+- [x] İçindekiler, kod blokları + kopyala, prev/next
+- [x] `?reader=1` tam ekran okuma modu (>2000 kelime)
+      — CSS ile (`:has([data-reader])`), JS ile değil: `useSearchParams()`
+      kalıcı kabuğu Suspense'e sarmayı ve TÜM sayfaların statik olmaktan
+      çıkmasını gerektiriyordu. Bir görünüm anahtarının bedeli bu olamaz.
 - [x] `not-found.tsx` + `error.tsx` (kök seviyede, deck kabuğunun dışında —
       bulunamayan bir sayfada altı uydu kart göstermek gürültü olurdu)
 
-**Faz 5 — kalan yarı (yazı detayı).** Yukarıdaki işaretsiz maddeler bir sonraki
-oturumun işi. `getPost` ve `PostWithBody` hazır bekliyor; eksik olan render
-katmanı ve `/blog/[slug]` etkileşimleri.
+**Faz 5 doğrulaması:** makale 200, olmayan slug 404, `Esc` → `/blog`, wheel
+sayfanın boşluğundan makaleye yönleniyor, ilerleme çubuğu kart scroll'unu
+izliyor, kod blokları vurgulu ve kopyalanabilir.
 
 ## Faz 6 — Formlar (1 oturum)
 

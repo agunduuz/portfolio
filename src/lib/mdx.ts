@@ -55,8 +55,48 @@ export type Post = {
   wordCount: number;
 };
 
+export type Heading = { id: string; text: string; level: 2 | 3 };
+
 /** Gövde metni yalnızca yazı detayında gerekir; liste bunu taşımaz. */
-export type PostWithBody = Post & { body: string };
+export type PostWithBody = Post & { body: string; headings: Heading[] };
+
+/**
+ * `rehype-slug`'ın ürettiği id ile AYNI olmalı, yoksa içindekiler linkleri
+ * hiçbir yere gitmez. GitHub-slugger davranışı: küçült, aksanları ayrıştır,
+ * harf/rakam/boşluk/tire dışını at, boşlukları tireye çevir.
+ */
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^\p{L}\p{N}\s-]/gu, "")
+    .trim()
+    .replace(/\s+/g, "-");
+}
+
+/**
+ * Başlıkları ham MDX'ten çıkarır. Kod bloklarının içindeki `#` satırları
+ * başlık DEĞİLDİR — shell yorumu ya da CSS id'si olabilir; önce fence'leri eler.
+ */
+function extractHeadings(body: string): Heading[] {
+  const withoutCode = body.replace(/^```[\s\S]*?^```/gm, "");
+  const headings: Heading[] = [];
+
+  for (const line of withoutCode.split("\n")) {
+    const match = /^(#{2,3})\s+(.+?)\s*$/.exec(line);
+    if (!match) continue;
+
+    const text = (match[2] ?? "").replace(/[*_`]/g, "");
+    headings.push({
+      id: slugify(text),
+      text,
+      level: match[1]?.length === 2 ? 2 : 3,
+    });
+  }
+
+  return headings;
+}
 
 function parse(slug: string, raw: string): PostWithBody {
   const { data, content } = matter(raw);
@@ -88,6 +128,7 @@ function parse(slug: string, raw: string): PostWithBody {
     readingMinutes: Math.max(1, Math.ceil(stats.minutes)),
     wordCount: stats.words,
     body: content,
+    headings: extractHeadings(content),
   };
 }
 
@@ -129,8 +170,9 @@ export async function getAllPosts(): Promise<Post[]> {
   const posts = await readAll();
 
   return posts.map((post) => {
-    const list: Post & { body?: string } = { ...post };
+    const list: Post & { body?: string; headings?: Heading[] } = { ...post };
     delete list.body;
+    delete list.headings;
     return list;
   });
 }
@@ -139,6 +181,27 @@ export async function getPost(slug: string): Promise<PostWithBody | null> {
   const posts = await readAll();
   return posts.find((p) => p.slug === slug) ?? null;
 }
+
+/**
+ * Önceki/sonraki yazı. Liste en yeniden eskiye sıralı olduğu için `prev`
+ * dizide BİR ÖNCEKİ, yani daha YENİ yazıdır — okuyucunun beklediği yön bu.
+ */
+export async function getNeighbours(
+  slug: string,
+): Promise<{ prev: Post | null; next: Post | null }> {
+  const posts = await getAllPosts();
+  const index = posts.findIndex((p) => p.slug === slug);
+
+  if (index === -1) return { prev: null, next: null };
+
+  return {
+    prev: posts[index - 1] ?? null,
+    next: posts[index + 1] ?? null,
+  };
+}
+
+/** `?reader=1` teklifi bu eşiğin üstünde gösterilir (INTERACTIONS §5.2). */
+export const READER_MODE_WORDS = 2000;
 
 /**
  * "Last Writing." slotu: `featured: true` olanların EN YENİSİ; yoksa en yeni

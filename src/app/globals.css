@@ -171,6 +171,28 @@ body {
   }
 }
 
+/**
+ * Reader modu — `?reader=1` (INTERACTIONS §5.2): ray gizlenir, makale dört
+ * kolona yayılır.
+ *
+ * Neden CSS: bunu JS'te çözmek `useSearchParams()` demekti, o da kalıcı
+ * kabuğun Suspense'e sarılmasını ve TÜM sayfaların statik olmaktan çıkmasını
+ * gerektiriyordu. Bir görünüm anahtarının bedeli bu olamaz.
+ *
+ * İşaret makale sayfasından geliyor: `<div data-reader>`. `:has()` onu görüp
+ * ızgarayı yeniden düzenliyor.
+ *
+ * `!important` şart: `<main>`'in `grid-area`'sı `DeckGrid` tarafından INLINE
+ * yazılıyor ve stylesheet bunu ancak `!important` ile yenebilir.
+ */
+.deck-grid:has([data-reader]) > aside > * {
+  display: none;
+}
+
+.deck-grid:has([data-reader]) > main {
+  grid-area: 1 / 1 / 4 / 5 !important;
+}
+
 @media (max-height: 799px), (max-width: 1023px) {
   .deck-viewport {
     height: auto;
