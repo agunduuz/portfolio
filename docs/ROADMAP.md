@@ -170,14 +170,23 @@ izliyor, kod blokları vurgulu ve kopyalanabilir.
 
 ## Faz 6 — Formlar (1 oturum)
 
-- [ ] `actions/subscribe.ts` + `actions/job-offer.ts`
-- [ ] Zod şemaları, alan bazlı hata mesajları
-- [ ] Honeypot + zaman eşiği + Upstash rate limit
-- [ ] Resend + React Email şablonu
-- [ ] `useActionState` / `useFormStatus` — pending/success/error
-- [ ] Başarılı gönderimde `DraftProvider` taslağı temizleniyor
-- [ ] JS kapalı testi
-- [ ] Form dolu durumdayken sayfa değişimi testi
+- [x] `actions/subscribe.ts` + `actions/job-offer.ts`
+- [x] Zod şemaları, alan bazlı hata mesajları
+- [x] Honeypot + zaman eşiği + Upstash rate limit (`lib/rate-limit.ts`)
+- [x] Resend — **düz metin, React Email DEĞİL.** Sapma bilinçli: React Email
+      yeni bir bağımlılık demek ve performans bütçesi Motion dışında ekleme
+      yasaklıyor. Bu e-posta yalnızca site sahibine gidiyor; düz metin hem
+      yeterli hem istemci uyumluluk derdi yok.
+- [x] `useActionState` / `useFormStatus` — pending/success/error
+- [x] Başarılı gönderimde `DraftProvider` taslağı temizleniyor
+- [x] JS kapalı testi — `<form method="POST">` sunucudan geliyor (Next
+      progressive enhancement), zaman damgası boşken form bot sayılmıyor
+- [x] Form dolu durumdayken sayfa değişimi testi (Faz 2'de ölçüldü)
+
+**Faz 6 notu — anahtarsız davranış.** Resend/Upstash tanımlı değilse:
+`isRateLimited` sessizce `false` döner (sınırlama kapalı, form çalışır) ama
+`sendMail` KULLANICIYA SÖYLER: "E-posta servisi henüz bağlı değil." Sessizce
+"gönderildi" demek yalan olurdu — kullanıcı cevap bekler, gelmez.
 
 ## Faz 7 — SEO ve performans (1 oturum)
 
