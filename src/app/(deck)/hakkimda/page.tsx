@@ -3,7 +3,12 @@ import { HeroCard } from "@/components/cards";
 import { AboutBody } from "@/components/modules/AboutBody";
 import { getGitHub } from "@/lib/github";
 
-export const metadata: Metadata = { title: "Hakkımda" };
+export const metadata: Metadata = {
+  title: "Hakkımda",
+  description:
+    "Anıl Gündüz kimdir, hangi teknolojilerle çalışır ve şimdiye kadar nerelerde ne üretti.",
+  alternates: { canonical: "/hakkimda" },
+};
 
 /**
  * Ana bölge 3 kolon × 3 satır: r1 Hero (lg), r2–3 Summary + Job History

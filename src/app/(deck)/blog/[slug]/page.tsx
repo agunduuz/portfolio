@@ -16,6 +16,8 @@ import {
   getPost,
   READER_MODE_WORDS,
 } from "@/lib/mdx";
+import { JsonLd } from "@/components/JsonLd";
+import { postSchema } from "@/lib/seo";
 
 /** Tüm yazılar build'de üretilir; yayın sonrası eklenen slug ISR ile gelir. */
 export async function generateStaticParams() {
@@ -98,6 +100,8 @@ export default async function PostPage({
 
   return (
     <Card size="lg" className="relative">
+      <JsonLd schemas={postSchema(post)} />
+
       {/*
         Reader modunun kabuğa ulaşma yolu. CSS `:has([data-reader])` ile bu
         işareti görüp rayı gizliyor ve makaleyi dört kolona yayıyor

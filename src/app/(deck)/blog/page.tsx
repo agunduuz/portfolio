@@ -4,8 +4,32 @@ import { LastWriting } from "@/components/modules/LastWriting";
 import { PostList } from "@/components/modules/PostList";
 import { Pagination } from "@/components/ui/Pagination";
 import { featuredPost, getAllPosts, POSTS_PER_PAGE } from "@/lib/mdx";
+import { JsonLd } from "@/components/JsonLd";
+import { blogSchema } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Yazılar" };
+/**
+ * Sayfalama SEO'su (SEO §4):
+ *  - Her sayfa KENDİNİ işaret eden canonical taşır. 2. sayfayı 1'e
+ *    canonical'lamak oradaki yazıların indekslenmemesine yol açar.
+ *  - Sayfa 2+ `noindex` YAPILMAZ; yazılara giden tek yol olabilir.
+ *  - Başlık ayrışır: "Yazılar — Sayfa 2".
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}): Promise<Metadata> {
+  const { page } = await searchParams;
+  const requested = Number(page);
+  const current = Number.isInteger(requested) && requested > 1 ? requested : 1;
+
+  return {
+    title: current > 1 ? `Yazılar — Sayfa ${current}` : "Yazılar",
+    description:
+      "Front-end, Next.js ve arayüz mimarisi üzerine yazılar — ölçülmüş bulgular, çözülmüş hatalar.",
+    alternates: { canonical: current > 1 ? `/blog?page=${current}` : "/blog" },
+  };
+}
 
 /**
  * Ana bölge: r1 Last Writing, r2–3 üç yazı kartı + sayfalama
@@ -48,6 +72,8 @@ export default async function BlogPage({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-(--gap-row)">
+      <JsonLd schemas={[blogSchema(posts)]} />
+
       {current === 1 && <LastWriting post={featured} />}
 
       <PostList posts={slice} />

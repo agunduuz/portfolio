@@ -190,15 +190,22 @@ izliyor, kod blokları vurgulu ve kopyalanabilir.
 
 ## Faz 7 — SEO ve performans (1 oturum)
 
-- [ ] Route başına `generateMetadata`, sayfalama başlıkları dahil
-- [ ] Semantik iskelet: `<main>` / `<aside>`, tek `<h1>`, kart başlıkları `<h3>`
-- [ ] `sitemap.ts`, `robots.ts`, `rss.xml`
-- [ ] JSON-LD: `Person`, `WebSite`, `ItemList`, `BlogPosting`, `BreadcrumbList`
-- [ ] `opengraph-image.tsx` — ana sayfa + yazı başına dinamik
-- [ ] Bundle analizi; `SatelliteRail` client ağacı küçültüldü
+- [x] Route başına `generateMetadata`, sayfalama başlıkları dahil
+      (`/blog?page=2` → "Yazılar — Sayfa 2", kendini işaret eden canonical)
+- [x] Semantik iskelet: `<main>` / `<aside>`, tek `<h1>`, kart başlıkları `<h3>`
+      — beş route'ta da ölçüldü: h1=1, main=1, aside=1
+- [x] `sitemap.ts`, `robots.ts`, `rss.xml` (üçü de 200, doğru content-type)
+- [x] JSON-LD: `Person`, `WebSite`, `ItemList`, `Blog`, `BlogPosting`,
+      `BreadcrumbList` — tek `@graph`, `</script>` enjeksiyonuna kapalı
+- [x] `opengraph-image.tsx` — ana sayfa + yazı başına dinamik
+- [x] Bundle analizi — **bütçe aşılıyor ve aşılmaya devam edecek**, bkz. SEO §7
+      ölçüm tutanağı. Çerçeve tabanı tek başına 246 KB; hedef 120 KB.
+      `LazyMotion` denendi, işe yaramadı (297 KB'a çıktı), geri alındı.
 - [ ] Geçiş sırasında uzun görev (>50ms) yok — Performance kaydı ile doğrula
-- [ ] Lighthouse ≥ 95 (4 kategori)
-- [ ] `SEO.md` kontrol listesi tamamlandı
+      — **elle yapılmalı**, DevTools kaydı gerektiriyor
+- [ ] Lighthouse ≥ 95 (4 kategori) — **elle yapılmalı**, yayın URL'inde
+- [ ] `SEO.md` kontrol listesi tamamlandı — yayın anındaki maddeler (HTTPS,
+      www yönlendirmesi, Rich Results Test) Faz 9'a bağlı
 
 ## Faz 8 — Erişilebilirlik ve cila (1 oturum)
 

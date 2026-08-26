@@ -150,6 +150,28 @@ RSS `app/rss.xml/route.ts`; `<link rel="alternate" type="application/rss+xml">` 
 
 **Hedefler:** LCP < 1.5s · INP < 200ms · CLS < 0.02 · TTFB < 200ms · route başına JS < 120 KB gzip
 
+> **Faz 7 ölçüm tutanağı — 120 KB hedefi bu stack'le ULAŞILAMAZ.**
+> Üretim build'i `next start` ile servis edilip anasayfanın yüklediği tüm
+> `<script>` dosyaları gzip'lenerek toplandı:
+>
+> | Ne                                   | gzip       |
+> | ------------------------------------ | ---------- |
+> | React 19 + Next 16 App Router tabanı | **246 KB** |
+> | Motion (`SatelliteRail`)             | 42 KB      |
+> | **Toplam**                           | **288 KB** |
+>
+> Uygulama kodu sıfır olsaydı bile çerçeve tabanı hedefin iki katı. Bu bir
+> gerileme değil, hedefin bu stack için baştan gerçekçi olmaması.
+>
+> `LazyMotion` + `m` + `domMax` denendi ve **işe yaramadı**: `domMax` da
+> `motion/react` girişinden geldiği için bundler ayırmıyor, toplam 297 KB'a
+> ÇIKTI. Geri alındı.
+>
+> Gerçekten küçültmenin tek yolu Motion'ı tamamen çıkarmak — ki o da rayın
+> taraf değiştirmesini, yani DESIGN-SYSTEM §0'da "sitenin hatırlanacak tek
+> hareketi" denen imzayı elle FLIP ile yeniden yazmak demek. Bu bir ürün
+> kararıdır, sahibi verir.
+
 **INP riski:** `layout` animasyonu her frame'de layout okur. Ray konteyneri + 2 kart =
 3 eleman; sınır bu. Ölçüm: Chrome DevTools Performance, geçiş sırasında uzun görev (>50ms)
 olmamalı.
