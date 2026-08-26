@@ -164,10 +164,30 @@ body {
   animation: deck-main-enter var(--dur-swap) var(--ease-out) 80ms both;
 }
 
+/**
+ * Reduced-motion zemini (CLAUDE.md → pazarlığa kapalı).
+ *
+ * DESIGN-SYSTEM §4: "tüm süreler 0.01ms, sadece opacity, taşıma iptal.
+ * Navigasyon çalışmaya devam eder." JS tarafı `useReducedMotion` ile
+ * hallediliyor (`SatelliteRail`, `useDeckNavigation`); burası CSS tarafının
+ * tamamını kapsıyor — hover `translateY`'leri, geçişler, `scroll-behavior`.
+ *
+ * `!important` gerekli: yardımcı sınıflardan gelen `transition-duration`
+ * değerlerini yenmesi lazım.
+ */
 @media (prefers-reduced-motion: reduce) {
   .deck-main-enter {
     animation-duration: 0.01ms;
     animation-delay: 0s;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
@@ -202,5 +222,35 @@ body {
 
   .deck-grid {
     grid-template-rows: auto;
+  }
+}
+
+/**
+ * Mobil düzen (CLAUDE.md: "Mobilde kartlar alt alta", ROADMAP Faz 8:
+ * "kart sırası ana bölge → uydu").
+ *
+ * Yalnızca satırları `auto` yapmak yetmiyordu: `grid-cols-4` ve kartların
+ * INLINE `grid-area` değerleri duruyor, yani 420px'lik bir ekranda dört tane
+ * 290px kolon → yatay taşma. Burada ızgara tek kolona iniyor ve her kart
+ * kendi sırasını buluyor.
+ *
+ * `!important` şart: `grid-area` inline yazılıyor (`DeckGrid`, `SatelliteRail`)
+ * ve stylesheet bunu ancak `!important` ile yenebilir.
+ *
+ * `<main>` DOM'da raydan SONRA geliyor — masaüstünde grid-area sırayı
+ * belirlediği için sorun değil. Mobilde `order: -1` onu öne alır: ziyaretçi
+ * önce sayfanın kendi içeriğini görmeli, uydu kartları sonra.
+ */
+@media (max-width: 1023px) {
+  .deck-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .deck-grid > * {
+    grid-area: auto !important;
+  }
+
+  .deck-grid > main {
+    order: -1;
   }
 }

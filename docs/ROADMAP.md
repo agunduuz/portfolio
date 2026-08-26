@@ -209,14 +209,25 @@ izliyor, kod blokları vurgulu ve kopyalanabilir.
 
 ## Faz 8 — Erişilebilirlik ve cila (1 oturum)
 
-- [ ] Klavyeyle tam gezinti (deck, carousel, kart içi scroll, sayfalama)
-- [ ] Kontrast denetimi — `text-2`/`text-3` kullanımları
-- [ ] Ekran okuyucu testi (VoiceOver): sayfa değişimi duyurusu, sayaç sessiz
-- [ ] `axe` DevTools sıfır kritik hata
-- [ ] Reduced motion testi
-- [ ] `grep -ri "lorem" src content` → boş
-- [ ] Mobil düzen: kart sırası ana bölge → uydu
-- [ ] Chanel kuralı: her ekrandan bir fazlalık çıkarıldı
+- [x] Klavyeyle tam gezinti — **`#main`'e atlama linki eklendi** (yoktu);
+      deck Page/Arrow, carousel Sol/Sağ, kart içi scroll `tabIndex={0}`,
+      sayfalama gerçek `<Link>`
+- [x] Kontrast denetimi — hepsi WCAG formülüyle hesaplandı, tablo
+      DESIGN-SYSTEM §1'de. Gövde metni her zeminde geçiyor. **Buton metni
+      2.54:1 ile AA'yı geçmiyor**; tasarım kararı olduğu için değiştirilmedi
+      ama dokümandaki "bu erişilebilirlik sorunu değil" iddiası düzeltildi.
+- [ ] Ekran okuyucu testi (VoiceOver) — **elle yapılmalı**
+- [ ] `axe` DevTools sıfır kritik hata — **elle yapılmalı**
+- [x] Reduced motion — JS tarafı `useReducedMotion`, CSS tarafı için global
+      `prefers-reduced-motion` bloğu eklendi (hover `translateY`'leri dahil)
+- [x] `grep -ri "lorem" src` → yalnızca "lorem yasak" diyen yorumlar
+- [x] Mobil düzen: kart sırası ana bölge → uydu. **Eksikti**: medya sorgusu
+      yalnızca satırları `auto` yapıyordu, `grid-cols-4` ve inline `grid-area`
+      duruyordu — 420px'de dört 290px kolon, yani yatay taşma. Artık tek kolon
+      ve `<main>` `order: -1` ile önde.
+- [x] Chanel kuralı: uydu Projects kartında repo linki yok (yalnızca "Go to
+      Live" + rozet), liste kartlarında "Go to Detail" metin — kartın tamamı
+      zaten link, ikinci bir `<a>` hem fazlalık hem geçersiz HTML olurdu
 
 ## Faz 9 — Yayın
 

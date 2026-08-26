@@ -59,12 +59,22 @@ hem "More" linki varsa biri fazladır.
 
 **Kontrast (WCAG AA):**
 
-| Çift                 | ≈ Oran | Kullanım                    |
-| -------------------- | ------ | --------------------------- |
-| `text` / `surface`   | 14:1   | başlık, birincil metin      |
-| `text-2` / `surface` | 7:1    | gövde metni — uygun         |
-| `text-3` / `surface` | 4:1    | **gövde metninde kullanma** |
-| `accent` / `surface` | 9:1    | link, vurgu başlık          |
+**Faz 8'de ÖLÇÜLDÜ** (tahmin değil, WCAG formülüyle hesaplandı):
+
+| Çift                  | Oran     | Durum                                                           |
+| --------------------- | -------- | --------------------------------------------------------------- |
+| `text` / `surface`    | 13.52    | ✅ başlık, birincil metin                                       |
+| `text-2` / `surface`  | 6.36     | ✅ gövde metni                                                  |
+| `text-2` / `bg`       | 7.88     | ✅                                                              |
+| `text-2` / `elevated` | 5.31     | ✅ callout, kod bloğu                                           |
+| `accent` / `surface`  | 9.56     | ✅ link, vurgu başlık                                           |
+| `danger` / `surface`  | 5.45     | ✅ hata metni                                                   |
+| `text-3` / `surface`  | 3.53     | ⚠ **gövde metninde kullanma** — etiket/ikon için AA 3.0'ı geçer |
+| `text-3` / `field`    | 4.01     | ⚠ yalnızca placeholder                                          |
+| `text` / `button`     | **2.54** | ❌ **WCAG AA ihlali** — aşağıya bak                             |
+
+`text-3` hiçbir yerde `elevated` üstünde kullanılmıyor (o çift 2.94 ile AA 3.0'ı
+bile geçmezdi); denetlendi.
 
 Accent'i geniş alanda zemin olarak kullanma. Accent = vurgu, zemin değil.
 
@@ -73,8 +83,16 @@ aktif nav linki · repo/yazı başlıkları · "Do you want to work with me?" ·
 Page" vurgusu · GitHub kullanıcı adı · focus ring · okuma ilerleme çubuğu.
 
 **Buton renkleri Figma'ya sadıktır.** "Send the Offer." ve "Enter." tasarımda gri
-görünür; öyle kalır. Bu bir erişilebilirlik sorunu değil, tasarım tercihidir
-(`CLAUDE.md` → "Tasarım kaynağı ve bağlayıcılık").
+görünür; öyle kalır (`CLAUDE.md` bu öğeyi adıyla anıp istisna sayıyor).
+
+> **Faz 8 düzeltmesi — "bu bir erişilebilirlik sorunu değil" cümlesi YANLIŞTI.**
+> Figma yeniden örneklendi: zemin tam `#999999`, metin beyaz. Oran **2.54:1**.
+> WCAG AA küçük metin için 4.5:1 istiyor; bu bir ihlaldir ve tercih olması onu
+> ihlal olmaktan çıkarmaz.
+>
+> Tasarım DEĞİŞTİRİLMEDİ çünkü `CLAUDE.md` bu öğeyi adıyla anıp "Figma kazanır"
+> demiş. Ama karar artık ölçülmüş bir sayıya dayanıyor: sahibi isterse metni
+> koyulaştırmak (`#121212` → 6.5:1) zemini hiç bozmadan ihlali kapatır.
 
 ---
 
