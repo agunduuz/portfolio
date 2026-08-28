@@ -231,13 +231,20 @@ izliyor, kod blokları vurgulu ve kopyalanabilir.
 
 ## Faz 9 — Yayın
 
-- [ ] Vercel'e bağlandı, env değişkenleri girildi
-- [ ] Alan adı + HTTPS + `www` yönlendirmesi
-- [ ] GitHub webhook üretime yönlendirildi
-- [ ] Search Console + Bing Webmaster + sitemap gönderimi
-- [ ] Vercel Speed Insights açık
-- [ ] Lighthouse CI GitHub Actions'ta
+- [ ] Vercel'e bağlandı, env değişkenleri girildi — **sahibi**
+- [ ] Alan adı + HTTPS + `www` yönlendirmesi — **sahibi**
+- [ ] GitHub webhook üretime yönlendirildi — **sahibi**
+      (uç hazır: `POST /api/revalidate`, `x-hub-signature-256` doğruluyor)
+- [ ] Search Console + Bing Webmaster + sitemap gönderimi — **sahibi**
+- [ ] Vercel Speed Insights açık — **sahibi** (paket eklenmedi: performans
+      bütçesi Motion dışında bağımlılık yasaklıyor, Vercel'de tek tıkla açılır)
+- [x] Lighthouse CI GitHub Actions'ta (`.github/workflows/lighthouse.yml`)
+      — PR'da ve main'e push'ta çalışır, PR'ın kendi build'ini ölçer;
+      erişilebilirlik ve SEO eşiği `error`, performans `warn` (bütçe aşımı
+      bilinen ve belgelenmiş, bkz. SEO §7)
 - [ ] Faz Kontrol paneli kaldırıldı (`rm -rf src/app/faz-kontrol`)
+      — **yayın günü**; o zamana kadar faz takibi için duruyor, `robots.ts`
+      zaten indekslemeyi kapatıyor
 
 ---
 
