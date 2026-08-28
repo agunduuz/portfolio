@@ -13,6 +13,22 @@ Ters sırada yaparsan her sayfayı yeniden yazmak zorunda kalırsın.
 Bu faz, `.env.local` içeriği herhangi bir yere (sohbet, log, commit, ekran görüntüsü)
 sızmışsa zorunludur.
 
+> **Denetlendi — tetikleyici koşul GERÇEKLEŞMEMİŞ, rotasyon gerekmiyor.**
+>
+> | Kontrol                                                      | Sonuç                                                                        |
+> | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+> | `.env.local` hiç commit edilmiş mi?                          | Hayır. Git geçmişinde yalnızca `.env.example` var (boş değerlerle, kasıtlı). |
+> | Geçmişte sır formatında dize (`github_pat_`, `ghp_`, `re_…`) | Hiçbir commit'te eşleşme yok.                                                |
+> | `.env.local` şu an ne taşıyor?                               | Yalnızca iki public değişken; hiçbir sunucu sırrı hiç girilmemiş.            |
+> | `.gitignore` koruması                                        | `.gitignore:34` → `.env*` yakalıyor.                                         |
+>
+> **Sınır:** bu denetim yalnızca BU DEPOYU kapsar. Bir anahtarı başka bir yere
+> (başka bir sohbet, ekran görüntüsü, CI logu) yapıştırdıysan bunu buradan
+> göremem — o durumda maddeler geçerlidir ve rotasyon şarttır.
+>
+> Anahtarlar ilk kez girildikten sonra bu faz yeniden anlamlı hale gelir; sır
+> sızarsa aşağıdaki liste uygulanır.
+
 - [ ] GitHub PAT iptal, yenisi üretildi (fine-grained, yalnızca `Metadata: Read`)
 - [ ] Resend API anahtarı silindi, yenisi üretildi
 - [ ] Upstash REST token rotate edildi
