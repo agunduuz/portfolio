@@ -41,7 +41,25 @@ export const SITE = {
   url: publicEnv.NEXT_PUBLIC_SITE_URL,
   location: "Samsun, Türkiye",
   email: CONTACT,
-  resume: "/anil-gunduz-cv.pdf",
+  /**
+   * İki dil, iki dosya. `download` adı dosya adından AYRI: ziyaretçinin
+   * indirdiği dosya `anil_gunduz_frontend_EN_CV.pdf` değil, ne olduğu belli
+   * bir ad taşısın.
+   */
+  resumes: [
+    {
+      lang: "tr" as const,
+      label: "Türkçe",
+      href: "/resume/anil_gunduz_frontend_CV.pdf",
+      download: "Anil-Gunduz-CV-TR.pdf",
+    },
+    {
+      lang: "en" as const,
+      label: "English",
+      href: "/resume/anil_gunduz_frontend_EN_CV.pdf",
+      download: "Anil-Gunduz-CV-EN.pdf",
+    },
+  ],
   careerStart: publicEnv.NEXT_PUBLIC_CAREER_START,
   socials: SOCIALS,
 } as const;
@@ -131,6 +149,6 @@ export const COPY = {
     label: "Hakkımda içeriği",
     empty: "Biyografi yakında — `config/about.ts` doldurulmayı bekliyor.",
   },
-  nav: { resume: "Resume" },
+  nav: { resume: "Resume", resumeMenu: "CV dili seçimi" },
   footer: { rights: "All rights reserved." },
 } as const;

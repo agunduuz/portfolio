@@ -3,7 +3,7 @@
 import { useOptimistic, useState, useTransition } from "react";
 import { toggleTask } from "./actions";
 import { Inline } from "./inline";
-import type { RoadmapPhase } from "./roadmap";
+import type { RoadmapPhase, Source } from "./roadmap";
 
 /** GEÇİCİ — Faz Kontrol paneli. Proje bitince bu klasör silinir. */
 
@@ -55,7 +55,16 @@ function Check({ done }: { done: boolean }) {
   );
 }
 
-export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
+export function PhaseList({
+  phases,
+  source,
+  title,
+}: {
+  phases: RoadmapPhase[];
+  /** Hangi dosyaya yazılacağı buradan gelir; serbest yol asla istemciden gelmez. */
+  source: Source;
+  title: string;
+}) {
   const [optimisticPhases, applyToggle] = useOptimistic(
     phases,
     (state: RoadmapPhase[], line: number) =>
@@ -87,7 +96,7 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
     setError(null);
     startTransition(async () => {
       applyToggle(line);
-      const result = await toggleTask(line, text);
+      const result = await toggleTask(source, line, text);
       if (!result.ok) setError(result.error);
     });
   }
@@ -104,10 +113,12 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
     <div className="flex flex-col gap-4">
       <header className="border-border bg-surface rounded-card flex flex-wrap items-center gap-x-5 gap-y-3 border p-6">
         <div className="mr-auto">
-          <h1 className="font-display text-h-card text-text">Faz Kontrol</h1>
+          <h2 className="font-display text-h-card text-text">{title}</h2>
           <p className="text-micro text-text-3 mt-1">
-            <code className="font-mono">docs/ROADMAP.md</code> · geliştirme
-            aracı, üretime çıkmaz
+            <code className="font-mono">
+              docs/{source === "roadmap" ? "ROADMAP" : "TODO"}.md
+            </code>{" "}
+            · geliştirme aracı, üretime çıkmaz
           </p>
         </div>
 
@@ -141,7 +152,7 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
             key={phase.number}
             className="border-border bg-surface rounded-card overflow-hidden border"
           >
-            <h2>
+            <h3>
               <button
                 type="button"
                 onClick={() => toggleOpen(phase.number)}
@@ -188,7 +199,7 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
                   />
                 </svg>
               </button>
-            </h2>
+            </h3>
 
             {isOpen && (
               <div className="border-border border-t px-6 py-4">

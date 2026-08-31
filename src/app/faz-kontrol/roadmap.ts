@@ -8,12 +8,29 @@ import path from "node:path";
  * Panel dosyayı parse eder, checkbox tıklaması dosyayı yerinde günceller.
  */
 
-const ROADMAP_PATH = path.join(process.cwd(), "docs", "ROADMAP.md");
+/**
+ * Panel iki dosya okur ve ikisi de aynı Markdown sözleşmesini kullanır:
+ *  - ROADMAP.md → fazlar, NE yapıldı
+ *  - TODO.md    → bloklar, KİM yapacak
+ *
+ * `Source` ayrımı yazma tarafında da gerekiyor: bir kutu tıklandığında hangi
+ * dosyanın güncelleneceğini istemciden gelen isim belirler, serbest yol değil.
+ */
+export type Source = "roadmap" | "todo";
 
-/** Bu başlıktan sonrası yol haritası değil, fikir listesi. */
-const STOP_HEADING = "## v2 fikirleri";
+const PATHS: Record<Source, string> = {
+  roadmap: path.join(process.cwd(), "docs", "ROADMAP.md"),
+  todo: path.join(process.cwd(), "docs", "TODO.md"),
+};
 
-const HEADING_RE = /^## Faz (-?\d+)\s+—\s+(.+?)\s*$/;
+/** Bu başlıklardan sonrası görev değil, not. */
+const STOP_HEADINGS = new Set([
+  "## v2 fikirleri",
+  "## Bilinen ve kabul edilmiş",
+]);
+
+/** `## Faz 3 — GitHub verisi` ve `## Blok 1 — İçerik` ikisi de eşleşir. */
+const HEADING_RE = /^## (?:Faz|Blok) (-?\d+)\s+—\s+(.+?)\s*$/;
 const META_RE = /^(.*?)\s*\(([^)]*)\)\s*$/;
 const ITEM_RE = /^- \[([ xX])\]\s?(.*)$/;
 const FINISH_RE = /^\*\*Bitiş:\*\*\s*(.*)$/;
@@ -59,7 +76,7 @@ export function parseRoadmap(source: string): Roadmap {
     const raw = lines[i] ?? "";
     const trimmed = raw.trim();
 
-    if (trimmed === STOP_HEADING) break;
+    if (STOP_HEADINGS.has(trimmed)) break;
 
     const heading = HEADING_RE.exec(raw);
     if (heading) {
@@ -145,8 +162,8 @@ export function parseRoadmap(source: string): Roadmap {
   };
 }
 
-export async function readRoadmap(): Promise<Roadmap> {
-  return parseRoadmap(await readFile(ROADMAP_PATH, "utf8"));
+export async function readSource(source: Source): Promise<Roadmap> {
+  return parseRoadmap(await readFile(PATHS[source], "utf8"));
 }
 
 export type ToggleResult =
@@ -159,15 +176,17 @@ export type ToggleResult =
  * düzenlendiyse satır kaymış olabilir; o durumda yazmadan hata döneriz.
  */
 export async function toggleItem(
+  source: Source,
   line: number,
   expectedText: string,
 ): Promise<ToggleResult> {
-  const source = await readFile(ROADMAP_PATH, "utf8");
-  const lines = source.split("\n");
+  const file = PATHS[source];
+  const raw0 = await readFile(file, "utf8");
+  const lines = raw0.split("\n");
   const raw = lines[line];
 
   if (raw === undefined) {
-    return { ok: false, error: "Satır bulunamadı — ROADMAP.md değişmiş." };
+    return { ok: false, error: "Satır bulunamadı — dosya değişmiş." };
   }
 
   const item = ITEM_RE.exec(raw);
@@ -180,13 +199,13 @@ export async function toggleItem(
   if (!expectedText.startsWith(text)) {
     return {
       ok: false,
-      error: "Madde metni eşleşmedi — ROADMAP.md dışarıdan değişmiş.",
+      error: "Madde metni eşleşmedi — dosya dışarıdan değişmiş.",
     };
   }
 
   const done = (item[1] ?? " ").toLowerCase() !== "x";
   lines[line] = raw.replace(ITEM_RE, `- [${done ? "x" : " "}] $2`);
 
-  await writeFile(ROADMAP_PATH, lines.join("\n"), "utf8");
+  await writeFile(file, lines.join("\n"), "utf8");
   return { ok: true, done };
 }
