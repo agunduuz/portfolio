@@ -19,5 +19,15 @@ import type { ReactNode } from "react";
  * Ray 500 ms'de kayarken ana bölge 380 ms'de solar — üç şey aynı anda hareket etmez.
  */
 export default function DeckTemplate({ children }: { children: ReactNode }) {
-  return <div className="deck-main-enter min-h-0 flex-1">{children}</div>;
+  return (
+    // `flex flex-col` ŞART, sadece `flex-1` değil. Bu kutu `<main>`'in flex
+    // çocuğu olarak doğru yüksekliği alıyordu ama KENDİSİ blok kutuydu; içindeki
+    // sayfa ızgarasının `flex-1`i hiçbir şey yapmıyor, ızgara içeriğine göre
+    // uzuyordu. Ölçüldü: main 659px, içindeki ızgara 1504px — fark
+    // `overflow-hidden` tarafından sessizce kırpılıyordu ve kart içi scroll
+    // hiç devreye girmiyordu.
+    <div className="deck-main-enter flex min-h-0 flex-1 flex-col">
+      {children}
+    </div>
+  );
 }

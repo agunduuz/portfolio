@@ -47,14 +47,27 @@ export function AboutBody() {
                 <li key={`${job.company}-${job.from}`}>
                   <div className="flex flex-wrap items-baseline gap-x-2">
                     <h3 className="text-h-item text-text">{job.role}</h3>
-                    <span className="text-label text-text-2">
+                    <span className="text-label text-accent">
                       · {job.company}
                     </span>
-                    <span className="text-micro text-text-3 ml-auto tabular-nums">
+                    <span className="text-micro text-text-3 ml-auto shrink-0 tabular-nums">
                       {formatRange(job.from, job.to)}
                     </span>
                   </div>
-                  <p className="text-body text-text-2 mt-1">{job.outcome}</p>
+
+                  <p className="text-micro text-text-3 mt-0.5">
+                    {job.location}
+                  </p>
+
+                  <p className="text-body text-text-2 mt-2">{job.outcome}</p>
+
+                  {job.highlights && job.highlights.length > 0 && (
+                    <ul className="text-body text-text-2 mt-2 flex list-disc flex-col gap-1.5 pl-5">
+                      {job.highlights.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
             </ul>

@@ -1,0 +1,243 @@
+---
+title: "Tek Bir Query Parametresi Bütün Sayfalarımı Dinamikleştirdi"
+description: "useSearchParams() bir istemci bileşeninde çağrıldığında Next.js App Router'da statik render'ı bozar. Neden Suspense istediğini, maliyetini ve CSS ile nasıl kaçınılacağını anlatıyorum."
+excerpt: "?reader=1 okumak istedim. Build patladı: useSearchParams() should be wrapped in a suspense boundary. Düzeltmesi tüm sayfaları statik olmaktan çıkarıyordu."
+date: 2026-09-02
+tags: ["nextjs", "react", "performans", "css"]
+featured: false
+draft: false
+lang: "tr"
+---
+
+Uzun yazılar için bir "tam ekran oku" modu istiyordum. Adresi `?reader=1`
+olacak, açıkken kenar çubuğu gizlenecek, makale dört kolona yayılacak.
+On dakikalık iş gibi duruyordu.
+
+Kabuk bileşenine parametreyi okuyan iki satır ekledim:
+
+```tsx
+const reader = useSearchParams().get("reader") === "1";
+const { mainArea, railSide } = resolveLayout(pathname, reader);
+```
+
+`next build` şunu dedi:
+
+```
+⨯ useSearchParams() should be wrapped in a suspense boundary at page "/blog"
+Error occurred prerendering page "/blog"
+```
+
+Hata mesajı çözümü de söylüyordu: Suspense'e sar. Sardım. Sonra build çıktısına
+baktım ve bütün sayfalarım `○ (Static)` satırından `ƒ (Dynamic)` satırına
+geçmişti.
+
+Bir görünüm anahtarı için ödenecek bedel bu değildi.
+
+## Başlangıç: statik ve dinamik ne demek
+
+Next.js App Router'da her route iki yoldan biriyle üretilir.
+
+**Statik (prerendered):** HTML build sırasında bir kez üretilir, CDN'e konur.
+Ziyaretçi geldiğinde sunucu hiçbir şey hesaplamaz, dosyayı verir. Hızlıdır ve
+ucuzdur.
+
+**Dinamik (server-rendered on demand):** HTML her istekte yeniden üretilir.
+Kullanıcıya özel içerik, çerez okuma, canlı veri gerektiğinde doğru seçimdir.
+
+<Callout type="tip">
+
+**15 yaşındaki birine anlatır gibi:** Statik render, sabah bütün sandviçleri
+hazırlayıp buzdolabına dizmek gibi. Müşteri gelince uzatırsın, bir saniye
+sürer. Dinamik render ise her müşteri geldiğinde sandviçi baştan yapmak.
+Sipariş kişiye özelse yapmak zorundasın; ama herkese aynı sandviç gidiyorsa
+her seferinde baştan yapmak sadece zaman kaybı.
+
+</Callout>
+
+Build çıktısındaki işaretler bunu gösterir:
+
+```
+Route (app)
+┌ ○ /                     ← statik
+├ ƒ /blog                 ← dinamik
+```
+
+`○` daireyi, `ƒ` fonksiyonu temsil ediyor. Fonksiyon her çağrıldığında çalışır.
+
+## Orta seviye: query parametresi neden statiği bozar
+
+Sebep aslında çok basit ama ilk bakışta görünmüyor.
+
+Statik HTML **build sırasında** üretilir. O anda ziyaretçinin hangi adresle
+geleceği bilinmez. `/blog` ve `/blog?reader=1` **aynı** HTML dosyasını paylaşır
+— query parametresi dosya adının parçası değildir.
+
+Yani bir bileşen "bana query parametresini ver" dediğinde, build sırasında
+verilecek bir cevap yok. Next'in iki seçeneği var: ya sayfayı dinamik yapacak,
+ya da o kısmı istemciye bırakacak.
+
+Suspense sınırı ikincisini seçmenin yolu. "Bu ağacın altı sunucuda
+render edilemez, istemcide çözülsün" demektir. Next'in verdiği hata da tam
+olarak bunu ister.
+
+<Callout type="warn">
+
+Aynı deopt'ı tetikleyen tek şey `useSearchParams` değil. `cookies()`,
+`headers()`, `searchParams` prop'unu okumak ve `cache: "no-store"` ile yapılan
+`fetch` çağrıları da route'u dinamikleştirir. Build çıktısındaki `ƒ` işaretini
+her sürümde kontrol et; sessizce yayılır.
+
+</Callout>
+
+## Benim durumumda maliyet neydi
+
+Kritik ayrıntı: `useSearchParams` çağrısını **kalıcı kabukta** yapmıştım —
+her route'ta render edilen, layout seviyesindeki bileşende.
+
+Bir sayfanın dinamikleşmesi kabul edilebilir. Ama kabuk her sayfada olduğu için
+`/`, `/hakkimda`, `/projeler`, `/blog` — hepsi birden dinamikleşti. Sırf bir
+sayfadaki bir görünüm anahtarı yüzünden.
+
+Suspense'e sarmak da tam çözmüyor: sınırın **üstündeki** ağaç statik kalır ama
+altındaki her şey istemcide çözülür. Kabuğu sarmak, kabuğun tamamını istemciye
+taşımak demekti.
+
+Ölçüp karar verdim: bir görünüm anahtarının bedeli, dört ekranın CDN'den
+gelmemesi olamaz.
+
+## Çözüm: parametreyi okumayı bırak
+
+Sonunda fark ettim ki **parametreyi okumak zorunda değilim.**
+
+Query parametresini zaten sayfa bileşeni okuyabiliyordu — o bir Server
+Component ve `searchParams` prop'u alıyor. Sorun, bilginin oradan kabuğa
+ulaşmasıydı. React ağacında kabuk sayfanın *üstünde* olduğu için prop yukarı
+gidemiyor.
+
+Ama CSS ağacın yönünü umursamıyor.
+
+Sayfa görünmez bir işaret bıraktı:
+
+```tsx
+export default async function PostPage({ searchParams }) {
+  const { reader } = await searchParams;
+  return (
+    <article>
+      {reader === "1" && <div data-reader hidden />}
+      {/* … */}
+    </article>
+  );
+}
+```
+
+Kabuk da o işareti CSS ile gördü:
+
+```css
+.deck-grid:has([data-reader]) > aside > * {
+  display: none;
+}
+
+.deck-grid:has([data-reader]) > main {
+  grid-area: 1 / 1 / 4 / 5 !important;
+}
+```
+
+`:has()` bir üst elemanın, içindeki bir çocuğa göre stillenmesini sağlar —
+uzun süre "üst seçici" diye imkânsız sayılan şey. Bugün tüm güncel
+tarayıcılarda çalışıyor.
+
+Sonuç: sayfalar statik kaldı, reader modu çalıştı, istemciye tek satır JS
+eklenmedi.
+
+<Callout type="tip">
+
+**Yine 15 yaşındaki birine:** Sınıfta arka sıradasın ve öğretmene bir şey
+söylemen lazım, ama konuşmak yasak. Not yazıp öne uzatamıyorsun çünkü sıralar
+tek yönlü. Onun yerine masana kırmızı bir kalem koyuyorsun; öğretmen sınıfa
+bakınca kırmızı kalemi görüp ne demek istediğini anlıyor. `data-reader` o
+kırmızı kalem, `:has()` de öğretmenin bakışı.
+
+</Callout>
+
+## Uzman seviyesi: ne zaman hangi yol
+
+Bu deneyimden çıkan karar ağacı şu:
+
+**Parametre yalnızca görünümü değiştiriyorsa → CSS.** Bir şey gizleniyor,
+genişliyor, sıralaması değişiyorsa React'in bilmesine gerek yok. `:has()`,
+`data-*` attribute'ları ve komşu seçiciler bunun için var.
+
+**Parametre içeriği değiştiriyorsa → Server Component'te oku.** Sayfalama,
+filtreleme, sıralama. `searchParams` prop'u zaten orada; `useSearchParams`
+gerekmez ve sonuç sunucuda üretilir.
+
+**Parametre etkileşimi sürüyorsa → `useSearchParams`, ama YEREL.** Canlı arama
+kutusu, açılır menü durumu gibi şeyler. O zaman hook'u ihtiyacı olan en küçük
+bileşende çağır ve **yalnızca onu** Suspense'e sar. Kabuğa asla koyma.
+
+Son madde en önemlisi. Bir dinamik API'yi ağacın ne kadar yukarısında
+çağırırsan, maliyeti o kadar çok route'a yayılır. Kural: **dinamik API'ler
+yaprakta yaşar.**
+
+### Ölçmeden inanma
+
+Her sürümde build çıktısına bak:
+
+```bash
+npm run build
+```
+
+`ƒ` işaretli route sayısı beklediğinden fazlaysa, birileri ağacın yukarısına
+bir dinamik API koymuş demektir. Bu, kod incelemesinde kolayca kaçan ama
+build çıktısında bir bakışta görünen bir regresyon.
+
+## Mülakatta çıkarsa
+
+**S: `useSearchParams` neden Suspense sınırı istiyor?**
+
+Statik HTML build sırasında üretilir ve o anda query parametresi bilinmez;
+`/blog` ile `/blog?x=1` aynı dosyayı paylaşır. Suspense sınırı "bu ağacın altı
+sunucuda prerender edilemez, istemcide çözülsün" demenin yolu. Sarmazsan Next
+prerender sırasında cevabı olmayan bir soruyla karşılaşır ve build'i durdurur.
+
+**S: `searchParams` prop'u ile `useSearchParams` hook'u arasındaki fark?**
+
+Prop Server Component'e gelir ve sunucuda çözülür; sonuç HTML'e girer. Hook
+istemci bileşenlerinde çalışır ve tarayıcıda çözülür. İçerik parametreye
+bağlıysa prop'u tercih et — hem statik/dinamik kararını sen verirsin hem de
+sonuç ilk HTML'de gelir.
+
+**S: Bir route'un statik mi dinamik mi olduğunu nasıl anlarsın?**
+
+`next build` çıktısındaki işaretten: `○` statik, `ƒ` dinamik. Ayrıca `cookies()`,
+`headers()`, `searchParams` ve `no-store` fetch çağrıları dinamikleştirir.
+
+**S: Dinamik API'yi layout'ta çağırmakla sayfada çağırmak arasındaki fark?**
+
+Layout her route'ta render edilir, dolayısıyla maliyeti tüm route'lara yayılır.
+Sayfada çağırırsan yalnızca o route dinamikleşir. Genel kural: dinamik API'ler
+ağacın olabildiğince altında, yaprakta yaşar.
+
+**S: `:has()` ne yapar ve neden önemli?**
+
+Bir elemanı, içerdiği başka bir elemana göre seçmeni sağlar —
+`.card:has(img)` gibi. Uzun süre CSS'te mümkün olmayan "üst seçici" ihtiyacını
+karşılar. Pratik faydası: daha önce JavaScript gerektiren durum yansıtmalarını
+CSS'te çözebilirsin, yani daha az istemci kodu.
+
+**S: Bu çözümün dezavantajı var mı?**
+
+Var. Durum artık iki yerde temsil ediliyor: URL'de ve DOM'daki bir işaretçide.
+Biri değişip diğeri değişmezse tutarsızlık doğar. Küçük ve tek yönlü bir bağ
+olduğu için kabul ettim, ama karmaşıklaşırsa (üç dört mod, iç içe durumlar)
+gerçek state yönetimine geçmek doğru olur.
+
+## Özet
+
+Bir query parametresini okumak masum görünür. Ama `useSearchParams` bir
+statik/dinamik kararıdır ve o kararı ağacın neresinde verdiğin, kaç route'un
+etkileneceğini belirler.
+
+Parametre yalnızca bir şeyin görünüp görünmeyeceğini değiştiriyorsa, React'in
+onu bilmesine gerek yok. Sayfa bir işaret bıraksın, CSS okusun. Daha az
+JavaScript, daha çok statik HTML ve aynı davranış.

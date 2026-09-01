@@ -1,50 +1,93 @@
 ---
 title: "CSS Grid'de 1fr Neden Taşar"
-description: "grid-template-rows: 1fr yazdığınızda satır içeriğinden küçülmez. Sebebi fr'nin gizli alt sınırı ve çözümü minmax(0, 1fr)."
-excerpt: "1fr aslında minmax(auto, 1fr) demek. Bu gizli auto, satırın içeriğinden küçülmesini engelliyor — ve kartlarınız kutunun dışına taşıyor."
+description: "1fr aslında minmax(auto, 1fr) demek. Bu gizli auto alt sınırın nereden geldiğini, ne zaman işine yaradığını ve nasıl kapatacağını sıfırdan uzmana kadar anlatıyorum."
+excerpt: "626 piksellik bir kutuya 1071 piksel içerik girdi ve hiçbir hata almadım. Sebep fr biriminin kimsenin bahsetmediği gizli alt sınırıydı."
 date: 2026-08-20
-tags: ["css", "grid", "layout"]
+tags: ["css", "grid", "flexbox", "layout"]
 featured: true
 draft: false
 lang: "tr"
 ---
 
-Sabit yükseklikli bir ekran tasarlıyordum: nav, üç satırlık bir içerik ızgarası,
-footer. Hepsi `100dvh` içine sığacak, sayfa asla scroll etmeyecek. Izgarayı
-yazdım:
+Sabit yükseklikli bir ekran kuruyordum: üstte nav, ortada üç satırlık bir içerik
+ızgarası, altta footer. Hepsi `100dvh` içine sığacak, sayfa asla scroll
+etmeyecek. Izgarayı yazdım, 1080p monitörde açtım, kusursuz. Sonra pencereyi
+küçülttüm ve en alttaki kart footer'ın altına düştü.
+
+Konsol temiz. Build temiz. TypeScript temiz. Sadece kart yanlış yerde.
+
+Ölçtüm: ana bölge **626 piksel**, içine yerleşen ızgara **1071 piksel**.
+Neredeyse iki katı. Oysa `fr` birimi tam olarak bunu engellemek için var —
+mevcut alanı paylaştırmak için.
+
+Sorun `fr`'nin ne demek olduğunu yanlış bilmemdi. Bu yazı o yanlışın hikâyesi:
+önce en baştan ne olduğunu, sonra tarayıcının içinde gerçekte ne döndüğünü,
+en sonda da bu davranışın ne zaman **isteyeceğin** bir şey olduğunu anlatıyorum.
+
+## Başlangıç: fr tam olarak ne demek
+
+`fr` "fraction" yani kesir. Izgaranın artan boşluğunu paylaştırır.
 
 ```css
-grid-template-rows: 1fr 1.2fr 0.9fr;
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+}
 ```
 
-Üç satır, oranları belli. Beklentim açık: kullanılabilir yüksekliği 3.1'e böl,
-her satıra payını ver. 1080p'de çalıştı. Sonra pencereyi küçülttüm ve en alttaki
-kart footer'ın altına düştü.
+Bu iki kolon demek: ikincisi birincinin iki katı. 900 piksellik bir konteynerde
+300 ve 600 olurlar.
 
-## Beklenti ile gerçek arasındaki fark
+Kritik kelime **artan boşluk**. `fr` konteynerin tamamını değil, sabit
+genişliklerden arta kalanı böler:
 
-Ölçtüm: ana bölge **626px**, içine yerleşen ızgara **1071px**. Neredeyse iki katı.
-Oysa `fr` birimi tam olarak bunu engellemek için var — mevcut alanı paylaştırmak
-için.
+```css
+grid-template-columns: 200px 1fr 1fr;
+```
 
-Sorun `fr`'nin ne anlama geldiğini yanlış bilmemdi. Spesifikasyona göre
-`grid-template-rows: 1fr` şunun kısaltması:
+900 pikselde: önce 200 gider, kalan 700 ikiye bölünür → 200, 350, 350.
+
+<Callout type="tip">
+
+**15 yaşındaki birine anlatır gibi:** Elinde 900 liralık bir bütçe var.
+Önce kirayı ödüyorsun, 200 lira. Kalan 700 lirayı iki kardeş eşit paylaşıyor,
+350'şer. `fr` işte o "kalanı paylaş" kısmı. Kira `200px`, kardeşler `1fr 1fr`.
+
+</Callout>
+
+Buraya kadar herkes hemfikir. Sorun kardeşlerden birinin "benim en az 500 liraya
+ihtiyacım var" demesiyle başlıyor.
+
+## Orta seviye: gizli alt sınır
+
+CSS Grid spesifikasyonuna göre `grid-template-rows: 1fr` şunun kısaltmasıdır:
 
 ```css
 grid-template-rows: minmax(auto, 1fr);
 ```
 
-O `auto` bir **alt sınır**. Satırın en fazla `1fr` kadar büyüyeceğini söylüyor,
-ama en az içeriğinin doğal yüksekliği kadar olacağını da söylüyor. İkisi
-çakıştığında alt sınır kazanır. Yani `fr` bir tavan, taban değil.
+`minmax(min, max)` bir aralık tanımlar. Yani `1fr` aslında şunu söylüyor:
+**en fazla** bir birim kadar büyü, ama **en az** `auto` kadar ol.
 
-İçerik 400px istiyorsa ve payına 200px düşüyorsa, satır 400px olur. Izgara
-konteynerin dışına taşar ve `overflow: hidden` varsa içerik sessizce kırpılır —
-ki bu daha kötüsü, çünkü hata görünmez.
+O `auto` her şeyi değiştiriyor. Satırın alt sınırını içeriğinin doğal
+yüksekliğine bağlıyor. İçerik 400 piksel istiyorsa ve satırın payına 200 piksel
+düşüyorsa, satır 400 piksel olur. `fr` bir tavan; taban değil.
+
+<Callout type="tip">
+
+**Yine 15 yaşındaki birine:** Kardeşlerden biri "bana 350 lira düştü ama benim
+kirası 500 lira olan bir odam var" diyor. CSS de "tamam, o zaman sana 500
+vereyim" diyor. Bütçe 900'dü ama toplam 200 + 500 + 350 = 1050 oldu. Fazlası
+nereden geliyor? Hiçbir yerden — hesap tutmuyor ve kutu taşıyor.
+
+</Callout>
+
+Bu davranışın adı **automatic minimum size**. Ve rastgele konmuş bir kural
+değil; birazdan neden var olduğuna geleceğiz.
 
 ## Çözüm
 
-Alt sınırı elle sıfırlayın:
+Alt sınırı elle sıfırlarsın:
 
 ```css
 grid-template-rows: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 0.9fr);
@@ -54,7 +97,28 @@ Artık satır içeriğinden küçülebilir. Kartlar payına düşen alanı alır
 ne yapacaklarına kendileri karar verir: kırpar, `line-clamp` uygular ya da kendi
 içlerinde scroll eder.
 
-Aynı tuzak flexbox'ta da var, orada adı `min-height: 0`:
+İkinci bir yol daha var ve çoğu yazıda atlanır: **alt sınır aslında satırın
+değil, içindeki elemanın özelliğidir.** Elemana dokunarak da kapatabilirsin:
+
+```css
+.grid-item {
+  min-height: 0; /* ya da */
+  overflow: hidden; /* ya da auto, scroll — görünür olmayan her şey */
+}
+```
+
+`overflow` değeri `visible` dışında bir şeye ayarlandığında otomatik alt sınır
+kendiliğinden düşer. Bu yüzden `overflow: auto` verdiğin bir kart bazen
+"kendiliğinden düzeliyor" — sihir değil, spesifikasyon.
+
+Hangisini seçmeli? Benim kuralım: **düzenin sorumluluğu düzende dursun.**
+Satırların sığması ızgaranın işi, o yüzden `minmax(0, …)` yazıyorum. Elemana
+`min-height: 0` koymak, her yeni kart eklendiğinde aynı şeyi hatırlamayı
+gerektirir.
+
+## Aynı tuzak flexbox'ta
+
+Flexbox'ta bu davranışın adı farklı ama mantığı aynı:
 
 ```css
 .card {
@@ -64,31 +128,157 @@ Aynı tuzak flexbox'ta da var, orada adı `min-height: 0`:
 }
 ```
 
-`flex: 1` de tek başına yetmez, çünkü flex item'ın varsayılan `min-height`
-değeri de `auto`. Aynı hikâye, farklı özellik adı.
+Flex item'ların varsayılan `min-width` ve `min-height` değeri `auto`'dur.
+`flex: 1` tek başına yetmez — o da bir tavan belirtir, tabanı değil.
 
-## Nasıl fark edilir
+Yatayda karşına en sık şu şekilde çıkar: uzun bir metin flex satırını genişletir
+ve `text-overflow: ellipsis` hiç çalışmaz. Çözüm `min-width: 0`:
 
-Bu hata sessizdir. Sayfa uzun ekranda düzgün görünür, kısa ekranda bozulur — ve
+```css
+.title {
+  flex: 1;
+  min-width: 0; /* bu olmadan ellipsis çalışmaz */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+```
+
+Bunu bir kez öğrendikten sonra yılda birkaç kez kurtarıcın olur.
+
+## Uzman seviyesi: bu davranış neden var
+
+En kolay yorum "CSS berbat" demek olurdu. Değil. Otomatik alt sınır bilinçli bir
+karar ve alternatifi daha kötü.
+
+Düşün: `minmax(0, 1fr)` varsayılan olsaydı, dar bir ekranda içerik **sessizce
+kırpılırdı**. Bir form alanı yarısı görünür halde kalırdı, bir düğme yok olurdu
+ve hiçbir uyarı almazdın. Otomatik alt sınır tam tersini yapıyor — kutuyu
+taşırarak sorunu **görünür** kılıyor.
+
+Yani varsayılan davranış "içerik kaybetmektense düzeni boz" diyor. Sabit
+yükseklikli bir tasarım kuruyorsan bu senin işine gelmez, ama sıradan bir
+sayfada doğru varsayılandır.
+
+<Callout type="warn">
+
+Bu yüzden `minmax(0, 1fr)`'i her yere refleks olarak yazma. Taşmayı kapatmak,
+taşmanın sebebini çözmez — yalnızca görünmez yapar. Sabit yükseklik gerçekten
+gerekiyorsa yaz; gerekmiyorsa sayfanın uzamasına izin ver.
+
+</Callout>
+
+Bir de şunu bil: `auto` alt sınırı, elemanın **min-content** katkısına eşit
+değildir tam olarak. Spesifikasyon buna "automatic minimum size" diyor ve
+hesabı; elemanın `min-width`/`min-height` değerine, `overflow` durumuna ve
+en-boy oranı varsa ona da bakıyor. Pratikte sezgi şu: *"içeriğin
+küçülemeyeceği en küçük hal"*.
+
+### Sık karşılaşılan üç varyant
+
+**1. `auto` satır ile `1fr` satır karışık.** `grid-template-rows: auto 1fr`
+yazdığında `auto` satır içeriğine göre büyür, `1fr` kalanı alır. Ama `1fr`
+satırın içeriği büyükse yine taşar. Klasik "header + içerik" düzeni:
+
+```css
+grid-template-rows: auto minmax(0, 1fr);
+```
+
+**2. İç içe ızgaralar.** Alt sınır her seviyede yeniden doğar. Dıştaki ızgarayı
+`minmax(0, 1fr)` yapıp içtekini unutursan sorun içeriden gelir. Zinciri
+yukarıdan aşağıya takip et.
+
+**3. Scroll alanı kurma.** Bir kartın içinde scroll etmesini istiyorsan üç şey
+birden gerekir:
+
+```css
+.card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.card-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+```
+
+Üçünden biri eksikse scroll çubuğu ya hiç çıkmaz ya da kartın kendisi büyür.
+
+## Nasıl teşhis edilir
+
+Bu hata sessizdir. Sayfa uzun ekranda düzgün görünür, kısa ekranda bozulur —
 `overflow: hidden` varsa "bozulma" bile görünmez, içerik sadece yok olur.
 
 En hızlı teşhis konsoldan:
 
 ```js
-document.querySelectorAll("section").forEach((el) => {
+document.querySelectorAll("*").forEach((el) => {
   const box = Math.round(el.getBoundingClientRect().height);
   const need = el.scrollHeight;
-  if (need > box) console.warn(el, `${need - box}px taşıyor`);
+  if (need - box > 1) console.warn(el, `${need - box}px taşıyor`);
 });
 ```
 
 `scrollHeight` içeriğin istediği yükseklik, `getBoundingClientRect().height`
-kutunun gerçek yüksekliği. Aradaki fark kaybettiğiniz piksellerdir.
+kutunun gerçek yüksekliği. Aradaki fark kaybettiğin piksellerdir.
 
-## Çıkarım
+DevTools tarafında ise Elements panelinde ızgara konteynerinin yanındaki
+**grid** rozetine tıkla; satır çizgileri ve boyutları ekrana çizilir. Taşan
+satırı gözle görürsün.
 
-`fr` "bu kadar yer kapla" demiyor, "en fazla bu kadar yer kapla, ama içeriğin
-sığdığı kadar da küçülme" diyor. Sabit yükseklikli bir düzen kuruyorsanız —
-dashboard, sunum, kiosk, `100dvh` bir sayfa — `minmax(0, 1fr)` varsayılanınız
-olsun. Sıradan bir sayfada fark etmezsiniz, çünkü sayfa zaten uzayabilir. Fark
-ettiğiniz yerde de iş işten geçmiş olur.
+## Mülakatta çıkarsa
+
+Bu konu görüşmelerde şaşırtıcı biçimde sık soruluyor, çünkü CSS'i ezberden mi
+yoksa anlayarak mı bildiğini hızlıca ayırıyor.
+
+**S: `grid-template-columns: 1fr 1fr` yazdım ama içerik taşıyor. Neden?**
+
+Çünkü `1fr` aslında `minmax(auto, 1fr)`. `auto` alt sınırı kolonun içeriğinden
+küçülmesini engelliyor. İçerik payına düşenden genişse kolon büyür ve ızgara
+konteyneri aşar. `minmax(0, 1fr)` ile alt sınır kaldırılır.
+
+**S: `minmax(0, 1fr)` ile `1fr` arasındaki fark tam olarak nedir?**
+
+`1fr` = `minmax(auto, 1fr)`. Tek fark alt sınır. `minmax(0, 1fr)` parçanın
+sıfıra kadar küçülmesine izin verir; `1fr` içeriğin doğal boyutunda durur.
+Üst sınır ikisinde de aynı.
+
+**S: Flexbox'ta `min-width: 0` neden gerekiyor?**
+
+Flex item'ların varsayılan `min-width`/`min-height` değeri `auto`. Grid'deki
+otomatik alt sınırın flexbox karşılığı. Bu yüzden `flex: 1` verilmiş bir
+elemanda `text-overflow: ellipsis` çalışmaz — eleman metnin min-content
+genişliğinden küçülemez. `min-width: 0` alt sınırı kaldırır.
+
+**S: Otomatik alt sınır ne zaman İSTENİR?**
+
+Neredeyse her sıradan sayfada. Varsayılan davranış "içerik kaybetmektense
+düzeni boz" der ve bu doğru varsayılandır — sessizce kırpılan bir düğmeden,
+taşan ama görünen bir düğme iyidir. Yalnızca sabit yükseklikli düzenlerde
+(dashboard, kiosk, sunum, `100dvh` bir ekran) kapatmak istersin.
+
+**S: `overflow: hidden` vermek de sorunu çözüyor. Neden?**
+
+Otomatik alt sınır yalnızca `overflow: visible` olan elemanlara uygulanır.
+`overflow` başka bir değere ayarlandığında alt sınır düşer. Ama bu bir yan
+etki; niyetini anlatmaz. Düzeni ızgarada çözmek daha okunur.
+
+**S: `min-height: 0` mı, `minmax(0, 1fr)` mi?**
+
+İkisi de çalışır. Ben ızgarayı tercih ediyorum çünkü sığdırma ızgaranın
+sorumluluğu; elemana yazmak her yeni çocuk eklendiğinde tekrarlanması gereken
+bir kural yaratır.
+
+## Özet
+
+`fr` "bu kadar yer kapla" demiyor. "En fazla bu kadar yer kapla, ama içeriğin
+sığdığı kadar da küçülme" diyor.
+
+Sıradan bir sayfada bunu hiç fark etmezsin, çünkü sayfa zaten uzayabilir. Sabit
+yükseklikli bir düzen kuruyorsan — dashboard, kiosk, sunum, `100dvh` bir ekran —
+`minmax(0, 1fr)` varsayılanın olsun. Ve bir kutunun neden taştığını ararken önce
+`scrollHeight` ile `getBoundingClientRect().height` farkına bak; cevap genelde
+oradadır.

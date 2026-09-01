@@ -17,12 +17,16 @@ etsen ziyaretçi "Biyografi yakında" görürdü.
 
 Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünür.
 
-- [ ] [!] `src/config/about.ts` → `summary`: 2–3 paragraf gerçek biyografi
-- [ ] [!] `src/config/about.ts` → `jobHistory`: şirket, rol, tarih (`2023-01`), tek satır çıktı
-- [ ] [!] `src/content/blog/css-grid-1fr-neden-tasar.mdx` — gözden geçir, kendi
-      sesinle yeniden yaz ya da sil (içerik doğru, künye senin)
-- [ ] [!] `src/content/blog/suspense-icinde-olen-animasyon.mdx` — aynısı
-- [ ] Üçüncü yazı (ROADMAP Faz 5 üç yazı istiyor, iki tane var)
+- [x] `src/config/about.ts` → `summary`: 2–3 paragraf gerçek biyografi
+- [x] `src/config/about.ts` → `jobHistory`: Otoparçasan, StrategyCube, Litum
+      (tip genişletildi: `location` + `highlights`, çünkü gerçek içerik tek
+      satıra sığmıyordu)
+- [x] `src/content/blog/css-grid-1fr-neden-tasar.mdx` — sahibinin yönergesiyle
+      yeniden yazıldı: başlangıçtan uzmana, mülakat soruları, "15 yaşındaki
+      birine anlatır gibi" bölümleri açıkça etiketli
+- [x] `src/content/blog/suspense-icinde-olen-animasyon.mdx` — aynı yapıda yeniden yazıldı
+- [x] Üçüncü yazı: `tek-query-parametresi-butun-sayfalari-dinamiklestirdi.mdx`
+      (useSearchParams'ın statik render'ı bozması ve CSS `:has()` ile kaçınma)
 - [ ] `src/config/private-projects.ts` — göstermek istediğin private projeler
       (boş bırakılabilir; ad 20 karakteri geçmesin, uzun ad kartı taşırıyor)
 

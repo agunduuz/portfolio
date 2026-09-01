@@ -1,16 +1,17 @@
 ---
 title: "Suspense İçinde Ölen Giriş Animasyonu"
-description: "Next.js App Router'da bir sayfayı async yapmak, üzerindeki Motion giriş animasyonunu sessizce iptal edip içeriği görünmez bırakabiliyor."
-excerpt: "Sayfayı async yaptım, ertesi gün bütün ekranlar boş açıldı. Sebep hydration değildi: animasyon başladı, Suspense araya girdi ve bir daha bitmedi."
+description: "Bir sayfayı async yapmak, üzerindeki JS giriş animasyonunu sessizce iptal edip içeriği tamamen görünmez bırakabiliyor. Sebebi, teşhisi ve JS ile CSS animasyonu arasındaki gerçek sınır."
+excerpt: "Sayfaları async yaptım, ertesi gün dört ekran da boş açıldı. Hata yok, uyarı yok, sadece opacity: 0. Sebep hydration değildi."
 date: 2026-08-22
-tags: ["nextjs", "react", "motion"]
+tags: ["nextjs", "react", "suspense", "animasyon"]
 featured: false
 draft: false
 lang: "tr"
 ---
 
-Bir route geçiş animasyonu yazmıştım. `template.tsx` her navigasyonda yeniden
-mount olduğu için animasyonun her seferinde çalışmasına ideal yer:
+Route geçişleri için bir giriş animasyonu yazmıştım. Next.js App Router'da
+`template.tsx` her navigasyonda yeniden mount olur, yani animasyonun her
+seferinde çalışmasını istiyorsan doğru yer orası:
 
 ```tsx
 "use client";
@@ -28,7 +29,8 @@ export default function Template({ children }) {
 }
 ```
 
-Haftalarca çalıştı. Sonra veri katmanını bağladım ve sayfalar `async` oldu:
+Haftalarca sorunsuz çalıştı. Sonra veri katmanını bağladım ve sayfalar `async`
+oldu:
 
 ```tsx
 export default async function Page() {
@@ -40,44 +42,97 @@ export default async function Page() {
 Ertesi gün dört ekranın dördü de boş açıldı. Nav vardı, footer vardı, kenardaki
 kartlar duruyordu. Ortadaki her şey yoktu.
 
-## Yanlış teşhis
+## Başlangıç: neden "boş" bir sayfayı debug etmek zordur
 
-İlk şüphem hydration hatası oldu. Konsolda gerçekten bir uyarı vardı — ama
-`cz-shortcut-listen` attribute'ü hakkındaydı, yani bir tarayıcı eklentisinin
-`<body>`'ye eklediği şey. Alakasız.
+Bir şey görünmediğinde üç ihtimal var ve üçü tamamen farklı yerlerde çözülür:
 
-İkinci şüphem dev sunucusunun bayatlaması oldu. Uzun süredir açıktı, epey Fast
-Refresh yemişti. Üretim build'i alıp `next start` ile çalıştırdım. Aynı sonuç.
-Yani gerçek bir hataydı.
+1. **Veri gelmedi** → içerik DOM'da hiç yok
+2. **Render edilmedi** → DOM'da yok ama veri var
+3. **Render edildi, görünmüyor** → DOM'da var, stil saklıyor
 
-DOM'a baktığımda içerik yerindeydi:
+<Callout type="tip">
 
+**15 yaşındaki birine anlatır gibi:** Odanda kalemin yok. Üç ihtimal var:
+kalemi hiç almadın, aldın ama çantada unuttun, ya da masanın üstünde duruyor
+ama üstüne bir kâğıt düşmüş. Üçünü ayırmadan aramaya başlarsan bütün evi
+gezersin. Önce masaya bakarsın — "orada mı?" sorusu, "neden yok?" sorusundan
+çok daha ucuzdur.
+
+</Callout>
+
+Ben sırayı yanlış kurdum ve önce en pahalı ihtimalden başladım.
+
+## Yanlış teşhisler
+
+**Birinci şüphe: hydration hatası.** Konsolda gerçekten bir uyarı vardı. Ama
+okuyunca `cz-shortcut-listen` attribute'ünden bahsediyordu — bir tarayıcı
+eklentisinin `<body>`'ye eklediği şey. React uyarısının kendisi bile "bu bir
+tarayıcı eklentisi yüzünden de olabilir" diyor. Alakasız.
+
+**İkinci şüphe: dev sunucusu bayatlamış.** Uzun süredir açıktı, epey Fast
+Refresh yemişti. Üretim build'i alıp `next start` ile çalıştırdım. **Aynı
+sonuç.** Yani gerçek bir hataydı, geliştirme artığı değil.
+
+Bu adım önemliydi: "dev'de garip davranıyor" ile "üretimde de bozuk" arasındaki
+fark, bir günlük yanlış aramayı önler.
+
+## Teşhis
+
+Üçüncü ihtimale geçtim: DOM'da var mı?
+
+```js
+const m = document.querySelector("main");
+console.log(m.getBoundingClientRect(), m.querySelectorAll("section").length);
+// DOMRect { x: 554, y: 147, width: 950, height: 626 }  ·  4
 ```
-main rect: 554,147,950,626 | children=1 | sections=4
+
+Kutu doğru yerde, doğru boyutta, dört kart içinde. İçerik oradaydı.
+
+Sonra hesaplanmış stile baktım:
+
+```js
+getComputedStyle(m.firstElementChild).opacity; // "0"
 ```
 
-Kutu doğru yerde, doğru boyutta, dört kart içinde. Sonra hesaplanmış stile
-baktım:
+`opacity: 0`. Ve `transform: matrix(1, 0, 0, 1, 0, 16)` — yani `translateY(16px)`.
 
+Bunlar tam olarak `initial` değerleriydi. Animasyon başlamış, ama bitmemişti.
+Saniyeler sonra bile. Web Animations API'sinden sorunca daha net oldu:
+
+```js
+m.firstElementChild.getAnimations().map((a) => a.playState);
+// ["running"]
 ```
-opacity: 0 | transform: matrix(1, 0, 0, 1, 0, 16)
-```
 
-`opacity: 0` ve `translateY(16px)`. Bunlar tam olarak `initial` değerleri.
-Animasyon başlamış, ama bitmemişti. Saniyeler sonra bile.
+"running" diyor ama ilerlemiyor. Bu, animasyonun **iptal edilip yeniden
+başlatılmadığı** durumun imzasıdır.
 
-## Neden
+## Sebep
 
-Bir sayfa bileşenini `async` yaptığınızda Next onu bir Suspense sınırının
-arkasına koyar ve HTML'i akıtarak gönderir. `template.tsx` istemci bileşeni
-olduğu için önce mount olur; Motion `initial` durumunu uygular ve animasyonu
-kuyruğa alır. Ardından React askıya alınan alt ağacı çözüp yeniden render eder.
+Bir sayfa bileşenini `async` yaptığında Next onu bir Suspense sınırının arkasına
+koyar ve HTML'i akıtarak (streaming) gönderir. Sıra şöyle işliyor:
 
-O yeniden render sırasında animasyon iptal ediliyor — ve yeniden
-başlatılmıyor. Motion açısından her şey normal: `animate` propu değişmedi,
-yapacak yeni bir iş yok. Eleman `initial` durumunda donup kalıyor.
+1. `template.tsx` bir istemci bileşeni; erken mount olur
+2. Motion `initial` durumunu uygular — `opacity: 0`
+3. Animasyonu kuyruğa alır
+4. React askıya alınan alt ağacı çözer ve o ağacı **yeniden render eder**
+5. O yeniden render sırasında animasyon iptal edilir
+6. Ve yeniden başlatılmaz
 
-Kritik nokta: bu bir hata mesajı üretmiyor. Konsol temiz, build temiz,
+Altıncı adım kilit nokta. Motion açısından ortada anormallik yok: `animate`
+prop'u değişmedi, yapacak yeni bir iş yok. Eleman `initial` durumunda donup
+kalıyor.
+
+<Callout type="tip">
+
+**Yine 15 yaşındaki birine:** Fırına kek koydun, zamanlayıcıyı kurdun.
+Zamanlayıcı çalarken biri elektriği kesip açtı. Fırın yeniden açıldı ama
+zamanlayıcı sıfırlandı ve kimse yeniden kurmadı. Kek fırında duruyor, fırın
+"çalışıyorum" diyor, ama pişmiyor. Animasyonun hali tam olarak buydu.
+
+</Callout>
+
+Kritik nokta: bu **hiçbir hata mesajı üretmiyor**. Konsol temiz, build temiz,
 TypeScript temiz. Sadece içerik görünmüyor.
 
 ## Çözüm
@@ -112,23 +167,107 @@ CSS animasyonunu React'in yeniden render'ı iptal edemez. Eleman DOM'a girdiği 
 tarayıcı animasyonu başlatır ve bitirir; React'in o ağacı kaç kez yeniden
 değerlendirdiği tarayıcıyı ilgilendirmez.
 
-`both` fill mode'u önemli: 80ms'lik gecikme boyunca eleman `from` durumunda
-kalsın, önce görünüp sonra kaybolmasın.
+`both` fill mode'u burada tesadüf değil:
 
-Yan fayda, bileşenin artık Server Component olması. Bir istemci bileşeni ve onun
+```
+animation: main-enter 380ms ease 80ms both;
+                                    ^^^^
+```
+
+`both` = `backwards` + `forwards`. `backwards` sayesinde 80 ms'lik gecikme
+boyunca eleman `from` durumunda bekler; olmasaydı önce görünür, sonra kaybolur,
+sonra tekrar belirirdi — göze çarpan bir titreme. `forwards` sayesinde de
+animasyon bitince `to` durumunda kalır.
+
+Yan fayda: bileşen artık bir Server Component. Bir istemci bileşeni ve onun
 taşıdığı animasyon kütüphanesi paketten düştü.
 
-## Çıkarım
+## Uzman seviyesi: sınır tam olarak nerede
+
+"CSS her zaman daha iyi" demek yanlış olur. Gerçek ayrım şu:
+
+**CSS'in işi:** mount anında bir kez çalışan, başlangıç ve bitiş durumu önceden
+bilinen animasyonlar. Giriş/çıkış geçişleri, hover, focus, yükleniyor
+göstergeleri. Bunlar React'in yaşam döngüsüne bağlı olmamalı.
+
+**JS'in işi:** çalışma anında hesap gerektiren animasyonlar. En tipik örnek
+**FLIP** — bir elemanın eski ve yeni konumunu ölçüp aradaki farkı `transform`
+ile kapatmak. Bunu CSS bilemez çünkü "eski konum" bir ölçüm sonucudur.
+
+Bu projede uydu rayın taraf değiştirmesi tam olarak bu kategoride: kart sağda
+iken sola geçiyor, iki konum da düzenden hesaplanıyor. Orada Motion'ın `layout`
+animasyonu duruyor ve doğru araç. Ama "mount olunca sol"? Onun için `@keyframes`
+yeter.
+
+<Callout type="warn">
+
+Aynı tuzağa `useEffect` içinde başlatılan `element.animate()` çağrıları da
+düşer. Suspense sınırının arkasındaki bir ağaçta effect birden fazla kez
+çalışabilir veya animasyon araya giren bir render'da iptal edilebilir. Mount
+animasyonunu JS'te başlatıyorsan `getAnimations()` ile durumunu kontrol
+edebilecek bir kaçış yolu bırak — ya da CSS'e taşı.
+
+</Callout>
+
+### Bunu baştan nasıl önlerdin
+
+- Bir sayfayı `async` yaptığında, üzerindeki istemci sarmalayıcılarının
+  animasyonlarını **tekrar test et**. `async` sessiz bir mimari değişikliktir.
+- Mount animasyonlarını CSS'te tut. React'in bilmesi gereken bir şey yok.
+- İçerik görünmüyorsa **önce DOM'a bak**. `querySelector` ile bul, varsa sorun
+  stil katmanındadır ve `opacity` aramak veri debug etmekten çok daha hızlıdır.
+
+## Mülakatta çıkarsa
+
+**S: `layout.tsx` ile `template.tsx` arasındaki fark nedir?**
+
+`layout.tsx` route değişiminde state'ini korur ve yeniden mount olmaz;
+`template.tsx` her navigasyonda yeni bir örnek oluşturur. Kalıcı kabuk, açık
+kalması gereken menü, form taslağı gibi şeyler `layout`'a; her geçişte yeniden
+çalışması gereken giriş animasyonu `template`'e gider.
+
+**S: Bir sayfayı `async` yapmak render'ı nasıl etkiler?**
+
+Next o sayfayı bir Suspense sınırının arkasına alır ve HTML'i parça parça
+gönderir. İstemci bileşenleri askıya alınan içerikten önce mount olabilir,
+sonra içerik çözülünce ağaç yeniden render edilir. Mount anına bağlı yan
+etkilerin bu ikinci render'dan sağ çıkacağını varsayma.
+
+**S: CSS animasyonu mu JS animasyonu mu?**
+
+Başlangıç ve bitiş durumu önceden biliniyorsa CSS. Çalışma anında ölçüm
+gerekiyorsa (FLIP, sürükleme, scroll'a bağlı ilerleme) JS. CSS animasyonu
+tarayıcıya ait olduğu için React'in yeniden render'ından etkilenmez; bu bir
+performans değil, **dayanıklılık** avantajıdır.
+
+**S: `animation-fill-mode: both` ne yapar?**
+
+`backwards` + `forwards`. `backwards` gecikme süresince `from` durumunu uygular,
+`forwards` animasyon bitince `to` durumunu korur. Gecikmeli bir giriş
+animasyonunda `both` yoksa eleman önce normal halinde görünür, sonra sıfırlanır,
+sonra tekrar belirir.
+
+**S: Bir elemanın neden görünmediğini nasıl bulursun?**
+
+Önce DOM'da olup olmadığına bakarım — varsa sorun veri ya da render değil, stil
+katmanındadır. Sonra `getComputedStyle` ile `opacity`, `visibility`, `display`,
+`transform` ve boyutlara bakarım. Animasyon şüphesi varsa `getAnimations()` ile
+`playState` ve `currentTime`'a bakarım; "running" ama ilerlemeyen bir animasyon
+iptal edilip yeniden başlatılmamış demektir.
+
+**S: Bunun üretimde olduğunu nasıl doğruladın?**
+
+`next build` + `next start` ile üretim build'ini yerelde çalıştırdım. Dev
+sunucusunun Fast Refresh artıkları çok fazla yanlış pozitif üretiyor; "dev'de
+garip" ile "üretimde bozuk" arasındaki farkı ayırmadan hata aramak zaman kaybı.
+
+## Özet
 
 Mount anında bir kez çalışan giriş animasyonları için CSS, JS'ten daha
-dayanıklı. JS animasyonu React'in yaşam döngüsüne bağlıdır; Suspense, streaming
-ve yeniden render araya girebilir. CSS animasyonu tarayıcıya aittir ve bu
-katmandan etkilenmez.
-
-JavaScript animasyonunu gerçekten gerektiren şeyler var — bu projede uydu rayın
-`layout` animasyonu gibi, iki farklı konum arasında FLIP hesabı isteyen işler.
-Ama "mount olunca sol"? Onun için `@keyframes` yeter.
+dayanıklıdır. JS animasyonu React'in yaşam döngüsüne bağlıdır; Suspense,
+streaming ve araya giren render'lar onu sessizce öldürebilir. CSS animasyonu
+tarayıcıya aittir ve bu katmandan etkilenmez.
 
 Ve daha genel bir ders: içeriğin görünmediği bir hatada önce DOM'da olup
-olmadığına bakın. Oradaysa sorun veri katmanında değil, stil katmanındadır — ve
+olmadığına bak. Oradaysa sorun veri katmanında değil, stil katmanındadır — ve
 `opacity: 0` aramak, veriyi debug etmekten çok daha hızlıdır.
