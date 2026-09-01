@@ -20,6 +20,11 @@
   --color-danger: #ff6b6b;
   --color-success: var(--color-accent);
 
+  /* GEÇİCİ — yalnızca /faz-kontrol panelinin "önce bunu yap" işareti için.
+     Panel `rm -rf src/app/faz-kontrol` ile kalkarken bu token da silinir.
+     Paletin parçası değil; ürün arayüzünde kullanma. 7.09:1 (surface). */
+  --color-priority: #f0a04b;
+
   /* Faz 2 ölçüm tutanağı (design/home.png, 1920×1426 artboard).
      DESIGN-SYSTEM §6 bu üçünü adlandırıyor ama değerini vermiyordu; piksel
      örneklemesiyle çıkarıldı.

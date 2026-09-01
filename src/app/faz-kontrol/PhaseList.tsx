@@ -9,7 +9,12 @@ import type { RoadmapPhase, Source } from "./roadmap";
 
 function countOf(phases: RoadmapPhase[]) {
   const items = phases.flatMap((p) => p.items);
-  return { done: items.filter((i) => i.done).length, total: items.length };
+  return {
+    done: items.filter((i) => i.done).length,
+    total: items.length,
+    /** Açık ve "önce" işaretli — bitmiş bir madde artık sıradaki adım değil. */
+    priority: items.filter((i) => i.priority && !i.done).length,
+  };
 }
 
 function Bar({ done, total }: { done: number; total: number }) {
@@ -32,14 +37,16 @@ function Bar({ done, total }: { done: number; total: number }) {
   );
 }
 
-function Check({ done }: { done: boolean }) {
+function Check({ done, priority }: { done: boolean; priority: boolean }) {
   return (
     <span
       aria-hidden
       className={`mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-[5px] border transition-colors duration-(--dur-micro) ${
         done
           ? "border-accent bg-accent text-bg"
-          : "border-border-strong text-transparent"
+          : priority
+            ? "border-priority text-transparent"
+            : "border-border-strong text-transparent"
       }`}
     >
       <svg viewBox="0 0 12 12" className="size-3" fill="none">
@@ -120,6 +127,15 @@ export function PhaseList({
             </code>{" "}
             · geliştirme aracı, üretime çıkmaz
           </p>
+
+          {overall.priority > 0 && (
+            <p className="text-micro text-priority mt-2 flex items-center gap-2">
+              <span className="border-priority rounded-inner border px-1.5 py-0.5">
+                önce
+              </span>
+              {overall.priority} madde önerilen sıradaki adım
+            </p>
+          )}
         </div>
 
         <div className="text-right">
@@ -217,14 +233,23 @@ export function PhaseList({
                         onClick={() => toggle(item.line, item.text)}
                         className="hover:bg-surface-hover focus-visible:ring-accent focus-visible:ring-offset-surface text-body rounded-inner flex w-full cursor-pointer items-start gap-3 px-2 py-1.5 text-left transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                       >
-                        <Check done={item.done} />
+                        <Check done={item.done} priority={item.priority} />
                         <span
                           className={
                             item.done
                               ? "text-text-3 line-through"
-                              : "text-text-2"
+                              : item.priority
+                                ? "text-priority"
+                                : "text-text-2"
                           }
                         >
+                          {/* Bitmiş bir madde artık "sıradaki adım" değil;
+                              öncelik rozeti yalnızca açık maddede görünür. */}
+                          {item.priority && !item.done && (
+                            <span className="border-priority text-priority text-micro rounded-inner mr-2 border px-1.5 py-0.5 align-middle">
+                              önce
+                            </span>
+                          )}
                           <Inline>{item.text}</Inline>
                         </span>
                       </button>

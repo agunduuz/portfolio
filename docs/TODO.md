@@ -6,17 +6,22 @@
 Her madde ya **sahibinde** (içerik, hesap, karar) ya da bir **tarayıcı aracı**
 gerektiriyor. Kodla kapatılabilecek bir madde kalmadıysa bu dosya doğrudur.
 
+**`[!]` ile başlayan maddeler önerilen sıradaki adımlardır** — panelde turuncu
+görünürler. Seçim ölçütü: en görünür boşluğu kapatan, en ucuz ve başka hiçbir
+şeye bağlı olmayan işler. Yayın (Blok 6) bunlardan sonra gelir; şu an deploy
+etsen ziyaretçi "Biyografi yakında" görürdü.
+
 ---
 
 ## Blok 1 — İçerik (yayın öncesi zorunlu)
 
 Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünür.
 
-- [ ] `src/config/about.ts` → `summary`: 2–3 paragraf gerçek biyografi
-- [ ] `src/config/about.ts` → `jobHistory`: şirket, rol, tarih (`2023-01`), tek satır çıktı
-- [ ] `src/content/blog/css-grid-1fr-neden-tasar.mdx` — gözden geçir, kendi
+- [ ] [!] `src/config/about.ts` → `summary`: 2–3 paragraf gerçek biyografi
+- [ ] [!] `src/config/about.ts` → `jobHistory`: şirket, rol, tarih (`2023-01`), tek satır çıktı
+- [ ] [!] `src/content/blog/css-grid-1fr-neden-tasar.mdx` — gözden geçir, kendi
       sesinle yeniden yaz ya da sil (içerik doğru, künye senin)
-- [ ] `src/content/blog/suspense-icinde-olen-animasyon.mdx` — aynısı
+- [ ] [!] `src/content/blog/suspense-icinde-olen-animasyon.mdx` — aynısı
 - [ ] Üçüncü yazı (ROADMAP Faz 5 üç yazı istiyor, iki tane var)
 - [ ] `src/config/private-projects.ts` — göstermek istediğin private projeler
       (boş bırakılabilir; ad 20 karakteri geçmesin, uzun ad kartı taşırıyor)
@@ -25,9 +30,9 @@ Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünü
 
 `.env.local` dosyasına. Hiçbiri olmadan site çalışır ama özellikler kapalıdır.
 
-- [ ] `GITHUB_TOKEN` — fine-grained PAT, `Public Repositories (read-only)` +
+- [ ] [!] `GITHUB_TOKEN` — fine-grained PAT, `Public Repositories (read-only)` +
       `Metadata: Read`. Yoksa Projects kartı `featured-projects.ts` fallback'iyle çalışır.
-- [ ] `GITHUB_USERNAME=agunduuz`
+- [ ] [!] `GITHUB_USERNAME=agunduuz`
 - [ ] `RESEND_API_KEY` + `CONTACT_EMAIL` — yoksa formlar "e-posta servisi bağlı
       değil" der (bilinçli: sessizce "gönderildi" demek yalan olurdu)
 - [ ] `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — yoksa hız sınırı kapalı
@@ -49,8 +54,8 @@ Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünü
 
 ## Blok 4 — GitHub tarafı (kod değil, repo ayarı)
 
-- [ ] Vitrin repolarına **açıklama** ekle — 12 repoda yok, kartlar açıklamasız çıkıyor
-- [ ] Vitrin repolarına **topic** ekle (`nextjs`, `typescript`, `tailwindcss`) —
+- [ ] [!] Vitrin repolarına **açıklama** ekle — 12 repoda yok, kartlar açıklamasız çıkıyor
+- [ ] [!] Vitrin repolarına **topic** ekle (`nextjs`, `typescript`, `tailwindcss`) —
       teknoloji rozetleri oradan türüyor
 - [ ] Gizlemek istediğin repolara `portfolio-hidden` topic'i
 

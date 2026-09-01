@@ -35,6 +35,9 @@ const META_RE = /^(.*?)\s*\(([^)]*)\)\s*$/;
 const ITEM_RE = /^- \[([ xX])\]\s?(.*)$/;
 const FINISH_RE = /^\*\*Bitiş:\*\*\s*(.*)$/;
 
+/** "Önce bunu yap" işareti. Yalnızca `docs/TODO.md`'de kullanılıyor. */
+const PRIORITY_MARK = "[!]";
+
 export type RoadmapItem = {
   phase: number;
   /** Faz içindeki sırası — sadece görüntüleme için. */
@@ -44,6 +47,12 @@ export type RoadmapItem = {
   done: boolean;
   /** Devam satırları tek boşlukla birleştirilmiş madde metni. */
   text: string;
+  /**
+   * `[!]` ile başlayan maddeler "önerilen sıradaki adım"dır ve panelde
+   * turuncu görünür. İşaret metinden AYRILIR; `text` temiz kalır ki
+   * `toggleItem` doğrulaması ve dosyaya yazma etkilenmesin.
+   */
+  priority: boolean;
 };
 
 export type RoadmapPhase = {
@@ -102,12 +111,16 @@ export function parseRoadmap(source: string): Roadmap {
 
     const item = ITEM_RE.exec(raw);
     if (item) {
+      const body = (item[2] ?? "").trim();
+      const priority = body.startsWith(PRIORITY_MARK);
+
       lastItem = {
         phase: current.number,
         index: current.items.length,
         line: i,
         done: (item[1] ?? " ").toLowerCase() === "x",
-        text: (item[2] ?? "").trim(),
+        text: priority ? body.slice(PRIORITY_MARK.length).trim() : body,
+        priority,
       };
       current.items.push(lastItem);
       collecting = null;
@@ -195,7 +208,13 @@ export async function toggleItem(
   }
 
   // Devam satırları metne dahil olduğu için baştan eşleşme yeterli.
-  const text = (item[2] ?? "").trim();
+  // `[!]` işareti dosyada duruyor ama `text` içinde yok; kıyaslamadan önce
+  // aynı şekilde ayrılmalı, yoksa öncelikli maddeler asla eşleşmez.
+  const rawBody = (item[2] ?? "").trim();
+  const text = rawBody.startsWith(PRIORITY_MARK)
+    ? rawBody.slice(PRIORITY_MARK.length).trim()
+    : rawBody;
+
   if (!expectedText.startsWith(text)) {
     return {
       ok: false,
