@@ -58,9 +58,14 @@ Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünü
 
 ## Blok 4 — GitHub tarafı (kod değil, repo ayarı)
 
-- [ ] [!] Vitrin repolarına **açıklama** ekle — 12 repoda yok, kartlar açıklamasız çıkıyor
-- [ ] [!] Vitrin repolarına **topic** ekle (`nextjs`, `typescript`, `tailwindcss`) —
-      teknoloji rozetleri oradan türüyor
+Vitrin **sırası** kodda (`src/config/featured-projects.ts`), **açıklama ve
+topic** GitHub'da. İkisi ayrı yer; aşağıdakiler GitHub tarafı.
+
+- [ ] [!] `aura-clinic` → açıklama BOŞ, topic BOŞ
+- [ ] [!] `nextjs-projects-library` → açıklama BOŞ, topic BOŞ
+- [ ] [!] `safe-zone` → açıklaması var ama **310 karakter**; kartta 2 satıra
+      kırpılıp cümle ortasında kesiliyor. 120 karaktere indir.
+      (topic'leri tamam: `nextjs14`, `shadcn-ui`, `tailwindcss`, `typescript`)
 - [ ] Gizlemek istediğin repolara `portfolio-hidden` topic'i
 
 ## Blok 5 — Elle test (tarayıcı aracı gerekiyor)

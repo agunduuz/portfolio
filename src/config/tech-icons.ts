@@ -30,6 +30,12 @@ export const TECH_MAP: Record<string, TechId> = {
   nextjs: "nextjs",
   "next-js": "nextjs",
   "next-dot-js": "nextjs",
+  // Sürüm numarası taşıyan topic'ler yaygın (safe-zone'da `nextjs14` var).
+  // Rozet framework'ü gösteriyor, sürümü değil.
+  next: "nextjs",
+  nextjs13: "nextjs",
+  nextjs14: "nextjs",
+  nextjs15: "nextjs",
   typescript: "typescript",
   tailwindcss: "tailwind",
   tailwind: "tailwind",

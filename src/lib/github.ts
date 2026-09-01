@@ -30,7 +30,12 @@ const PORTFOLIO_QUERY = /* GraphQL */ `
       url
       avatarUrl(size: 240)
       repositories(
-        first: 20
+        # 50, keyfi bir sayı değil: 64 public repo var ve vitrindeki
+        # safe-zone pushedAt sıralamasında 9. sırada (son push 2024).
+        # first:20 ile bugün sığıyor ama 12 repoya daha push atılırsa
+        # pencereden düşer ve vitrin slotu sessizce boşalır — FEATURED
+        # sıralaması onu kurtaramaz, çünkü veri hiç gelmemiş olur.
+        first: 50
         privacy: PUBLIC
         isFork: false
         orderBy: { field: PUSHED_AT, direction: DESC }
