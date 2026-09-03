@@ -202,13 +202,21 @@ function fallback(): GitHubData {
 /**
  * Elle küratörlük sırası; listede olmayan repo `Infinity` alır ve arkaya düşer.
  *
+ * **İki kaynaktan besleniyor.** Vitrin artık yalnızca public repolardan
+ * oluşmuyor: private projeler de sıraya girebiliyor ve ikisi TEK havuzda
+ * yarışıyor. Ayrı iki sıra tutmak "1. sırada iki proje var" durumunu mümkün
+ * kılardı; slot dağılımı (1 → Last Project, 2–3 → ızgara) buna izin vermez.
+ *
  * `Map<string, …>` açıkça yazılıyor: `FEATURED` `as const` olduğu için anahtar
- * tipi üç repo adının birleşimine kilitleniyor ve GitHub'dan gelen herhangi bir
+ * tipi repo adlarının birleşimine kilitleniyor ve GitHub'dan gelen herhangi bir
  * `string` ile sorgulanamıyor.
  */
-const FEATURED_ORDER = new Map<string, number>(
-  FEATURED.map((f) => [f.repo, f.order]),
-);
+const FEATURED_ORDER = new Map<string, number>([
+  ...FEATURED.map((f) => [f.repo, f.order] as [string, number]),
+  ...PRIVATE_PROJECTS.filter((p) => p.order !== undefined).map(
+    (p) => [p.name, p.order as number] as [string, number],
+  ),
+]);
 const FEATURED_LIVE = new Map<string, string | null>(
   FEATURED.map((f) => [f.repo, f.live]),
 );
@@ -233,7 +241,7 @@ function fromPrivate(): Project[] {
     topics: [],
     tech: [...p.tech],
     pushedAt: new Date(p.updated).toISOString(),
-    featured: FEATURED_ORDER.has(p.name),
+    featured: p.order !== undefined,
     isPrivate: true,
   }));
 }
