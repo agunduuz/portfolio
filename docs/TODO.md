@@ -27,17 +27,19 @@ Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünü
 - [x] `src/content/blog/suspense-icinde-olen-animasyon.mdx` — aynı yapıda yeniden yazıldı
 - [x] Üçüncü yazı: `tek-query-parametresi-butun-sayfalari-dinamiklestirdi.mdx`
       (useSearchParams'ın statik render'ı bozması ve CSS `:has()` ile kaçınma)
-- [x] `src/config/private-projects.ts` — dört vitrin projesi eklendi: RefTakip,
-      Codworks, Vega PDR, Gündüz Wedding. Dosya adı artık yanıltıcı (içindekiler
-      private değil); istersen `curated-projects.ts` olarak yeniden adlandırılır.
+- [x] `src/config/curated-projects.ts` — dört vitrin projesi eklendi: RefTakip,
+      Codworks, Vega PDR, Gündüz Wedding. Dosya `private-projects.ts`'ten
+      yeniden adlandırıldı; içindekilerin çoğu artık public.
 
 ## Blok 2 — Anahtarlar
 
 `.env.local` dosyasına. Hiçbiri olmadan site çalışır ama özellikler kapalıdır.
 
-- [ ] [!] `GITHUB_TOKEN` — fine-grained PAT, `Public Repositories (read-only)` +
-      `Metadata: Read`. Yoksa Projects kartı `featured-projects.ts` fallback'iyle çalışır.
-- [ ] [!] `GITHUB_USERNAME=agunduuz`
+- [ ] [!] `GITHUB_TOKEN` — **satır `.env.local`'de hazır, değeri boş.**
+      Fine-grained PAT: github.com/settings/personal-access-tokens →
+      Repository access `Public Repositories (read-only)`, permissions
+      `Metadata: Read-only`. Yoksa site fallback ile çalışır.
+- [x] `GITHUB_USERNAME=agunduuz` — `.env.local`'e yazıldı
 - [ ] `RESEND_API_KEY` + `CONTACT_EMAIL` — yoksa formlar "e-posta servisi bağlı
       değil" der (bilinçli: sessizce "gönderildi" demek yalan olurdu)
 - [ ] `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — yoksa hız sınırı kapalı
@@ -59,7 +61,7 @@ Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünü
 
 ## Blok 4 — GitHub tarafı (kod değil, repo ayarı)
 
-Vitrindeki dört projenin metni ve kapağı artık `private-projects.ts`'ten
+Vitrindeki dört projenin metni ve kapağı artık `curated-projects.ts`'ten
 geliyor; GitHub açıklamaları onları **etkilemiyor**. Buradaki maddeler
 carousel'de vitrinin ARKASINDAN gelen repo'lar için.
 
@@ -78,12 +80,8 @@ carousel'de vitrinin ARKASINDAN gelen repo'lar için.
 - [ ] VoiceOver: sayfa değişimi duyuruluyor, sayaç sessiz
 - [ ] `axe` DevTools — sıfır kritik hata
 - [ ] Gerçek mobil cihazda kontrol (CSS yazıldı ama gerçek cihazda denenmedi)
-- [ ] [!] **Kapak görsellerini küçült.** Dördü de 3426×1980 PNG, toplam 5.8 MB
-      (`vega-pdr.png` tek başına 3.1 MB). Kartlarda en geniş kullanım ~440px;
-      yani 8 kat fazla piksel. `next/image` teslimatı hallediyor ama depo
-      şişiyor ve dev'de optimizasyon sayfayı kilitliyor — ekran görüntüsü
-      alırken zaman aşımına uğradı. 1400px genişliğe indirmek yeterli:
-      `sips -Z 1400 public/projects/*.png`
+- [x] Kapak görselleri küçültüldü: 3426×1980 → **1400×809**, toplam
+      5.8 MB → **1.6 MB**
 
 ## Blok 6 — Yayın (Faz 9)
 

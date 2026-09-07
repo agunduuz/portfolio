@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { githubEnv, hasGitHubEnv } from "./env.server";
 import { FEATURED } from "@/config/featured-projects";
-import { PRIVATE_PROJECTS } from "@/config/private-projects";
+import { CURATED_PROJECTS } from "@/config/curated-projects";
 import { resolveTech, type TechId } from "@/config/tech-icons";
 
 /**
@@ -148,8 +148,8 @@ const PROFILE_URL = `https://github.com/${GITHUB_USER}`;
  * repo açıklamasıdır; uydurma açıklama yazmak veriyi ikiye böler. Açıklama
  * boşsa kart o satırı zaten atlar.
  *
- * Private projeler fallback'te de görünür — onların kaynağı zaten API değil,
- * `private-projects.ts`. API'nin çökmesi onları etkilemez.
+ * Vitrin projeleri fallback'te de görünür — onların kaynağı zaten API değil,
+ * `curated-projects.ts`. API'nin çökmesi onları etkilemez.
  *
  * Fonksiyon, sabit değil: `fromPrivate()` modül seviyesindeki `FEATURED_ORDER`
  * map'ine bakıyor ve o aşağıda tanımlı. Sabit olsaydı modül yüklenirken TDZ'ye
@@ -210,7 +210,7 @@ function fallback(): GitHubData {
  */
 const FEATURED_ORDER = new Map<string, number>([
   ...FEATURED.map((f) => [f.repo, f.order] as [string, number]),
-  ...PRIVATE_PROJECTS.filter((p) => p.order !== undefined).map(
+  ...CURATED_PROJECTS.filter((p) => p.order !== undefined).map(
     (p) => [p.name, p.order as number] as [string, number],
   ),
 ]);
@@ -224,24 +224,24 @@ const HIDDEN_TOPIC = "portfolio-hidden";
  * Elle yazılmış bir kaydın sahiplendiği repo adları.
  *
  * Bu eleme olmasaydı proje listede İKİ KEZ çıkardı: bir kez API'den (public
- * repo olarak), bir kez `private-projects.ts`'ten. Elle yazılan kayıt kazanır
+ * repo olarak), bir kez `curated-projects.ts`'ten. Elle yazılan kayıt kazanır
  * çünkü açıklaması, kapağı ve teknoloji listesi GitHub'dakinden iyi.
  */
 const OVERRIDDEN_REPOS = new Set(
-  PRIVATE_PROJECTS.map((p) => p.repo).filter(
+  CURATED_PROJECTS.map((p) => p.repo).filter(
     (r): r is string => r !== undefined,
   ),
 );
 
 /**
- * Elle yazılmış proje kayıtlarını API'den gelenlerle aynı şekle sokar.
+ * Elle küratörlük edilmiş proje kayıtlarını API'den gelenlerle aynı şekle sokar.
  * Sıralama, slot dağıtımı ve kartlar ikisini ayırt etmez.
  *
  * `repo` verilmişse "Repository ›" linki üretilir; verilmemişse `url` null
  * kalır ve link hiç render edilmez — gösterilecek bir adres yok.
  */
 function fromPrivate(): Project[] {
-  return PRIVATE_PROJECTS.map((p) => ({
+  return CURATED_PROJECTS.map((p) => ({
     name: p.name,
     description: p.description,
     url: p.repo ? `${PROFILE_URL}/${p.repo}` : null,

@@ -1,16 +1,18 @@
 import type { TechId } from "./tech-icons";
 
 /**
- * Elle yazılmış proje bilgileri — **bu dosya GitHub'ı EZER**.
+ * Vitrin projeleri — elle küratörlük. **Bu dosya GitHub'ı EZER.**
  *
- * Başlangıçta yalnızca private repo'lar içindi. Artık asıl gerekçe farklı:
- * buradaki metin, ekran görüntüsü ve teknoloji listesi sahibinin kendi
- * yazdığı içerik ve GitHub'daki repo açıklamasından daha iyi. Bir proje hem
- * burada hem GitHub'da varsa (`repo` alanı) API kopyası ELENİR, bu kayıt kazanır.
+ * Dosya başlangıçta `private-projects.ts` adındaydı ve yalnızca private
+ * repo'lar içindi. Gerekçe değişti: buradaki metin, ekran görüntüsü ve
+ * teknoloji listesi elle yazıldığı için GitHub'daki repo açıklamasından iyi.
+ * Repo'nun public olup olmaması artık belirleyici değil — o yüzden ad da
+ * "curated" oldu.
  *
- * `repo` verilmeyen kayıtlar yalnızca burada yaşar — private bir repo ya da
- * hiç repo'su olmayan bir iş olabilir. O durumda "Repository ›" linki
- * render edilmez, çünkü gösterilecek bir adres yok.
+ * Bir proje hem burada hem GitHub'da varsa (`repo` alanı) API kopyası ELENİR,
+ * bu kayıt kazanır. `repo` verilmeyen kayıtlar yalnızca burada yaşar: private
+ * bir repo ya da hiç repo'su olmayan bir iş olabilir. O durumda "Repository ›"
+ * linki render edilmez, çünkü gösterilecek bir adres yok.
  *
  * ⚠ BURAYA YAZDIĞIN HER ŞEY YAYINDA GÖRÜNÜR.
  *   - Müşteri adı, iç kod adı, NDA kapsamındaki detay yazma.
@@ -18,7 +20,7 @@ import type { TechId } from "./tech-icons";
  *   - Emin değilsen yazma. Bir projeyi göstermemek, yanlış şeyi göstermekten
  *     her zaman ucuzdur.
  */
-export type PrivateProject = {
+export type CuratedProject = {
   /**
    * Kartta görünen ad. Repo adı olmak zorunda değil.
    *
@@ -64,7 +66,7 @@ export type PrivateProject = {
   order?: number;
 };
 
-export const PRIVATE_PROJECTS: PrivateProject[] = [
+export const CURATED_PROJECTS: CuratedProject[] = [
   {
     name: "RefTakip",
     description:

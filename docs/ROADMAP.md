@@ -116,7 +116,7 @@ carousel indeksi ve form taslağı korunuyor.
 ✅ Doğrulandı: `.env.local`'de GitHub anahtarı hiç yokken site fallback ile render
 ediyor, Projects kartı `featured-projects.ts` verisini gösteriyor.
 
-**Private projeler (Faz 3 eki).** `config/private-projects.ts` — elle küratörlük,
+**Private projeler (Faz 3 eki).** `config/curated-projects.ts` — elle küratörlük,
 opt-in. GitHub API'sinden private repo ÇEKİLMİYOR; sebebi opt-out modelin private
 veri için yanlış varsayılan olması (bir `portfolio-hidden` unutulursa yayına çıkar).
 API zaten işe yaramazdı: private repo'nun kapak görseli jenerik placeholder olarak
