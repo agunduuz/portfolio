@@ -123,8 +123,6 @@ export type Project = {
   tech: TechId[];
   pushedAt: string;
   featured: boolean;
-  /** Kartta "Private" etiketi çıkarır ve repo linkini bastırır. */
-  isPrivate: boolean;
 };
 
 export type Profile = {
@@ -177,7 +175,6 @@ function fallback(): GitHubData {
     tech: [],
     pushedAt: new Date(0).toISOString(),
     featured: true,
-    isPrivate: false,
   }))
     .concat(fromPrivate())
     .sort(byFeaturedThenRecent);
@@ -224,15 +221,30 @@ const FEATURED_LIVE = new Map<string, string | null>(
 const HIDDEN_TOPIC = "portfolio-hidden";
 
 /**
- * Elle yazılmış private projeleri API'den gelenlerle aynı şekle sokar.
- * Sıralama, slot dağılımı ve kartlar ikisini ayırt etmez — tek fark
- * `isPrivate` ve `url`'ün null olması.
+ * Elle yazılmış bir kaydın sahiplendiği repo adları.
+ *
+ * Bu eleme olmasaydı proje listede İKİ KEZ çıkardı: bir kez API'den (public
+ * repo olarak), bir kez `private-projects.ts`'ten. Elle yazılan kayıt kazanır
+ * çünkü açıklaması, kapağı ve teknoloji listesi GitHub'dakinden iyi.
+ */
+const OVERRIDDEN_REPOS = new Set(
+  PRIVATE_PROJECTS.map((p) => p.repo).filter(
+    (r): r is string => r !== undefined,
+  ),
+);
+
+/**
+ * Elle yazılmış proje kayıtlarını API'den gelenlerle aynı şekle sokar.
+ * Sıralama, slot dağıtımı ve kartlar ikisini ayırt etmez.
+ *
+ * `repo` verilmişse "Repository ›" linki üretilir; verilmemişse `url` null
+ * kalır ve link hiç render edilmez — gösterilecek bir adres yok.
  */
 function fromPrivate(): Project[] {
   return PRIVATE_PROJECTS.map((p) => ({
     name: p.name,
     description: p.description,
-    url: null,
+    url: p.repo ? `${PROFILE_URL}/${p.repo}` : null,
     liveUrl: p.liveUrl,
     coverUrl: p.cover ?? null,
     hasCustomCover: Boolean(p.cover),
@@ -242,7 +254,6 @@ function fromPrivate(): Project[] {
     tech: [...p.tech],
     pushedAt: new Date(p.updated).toISOString(),
     featured: p.order !== undefined,
-    isPrivate: true,
   }));
 }
 
@@ -263,6 +274,7 @@ function shape(user: z.infer<typeof UserNode>): GitHubData {
     .filter(
       (node) =>
         !node.isArchived &&
+        !OVERRIDDEN_REPOS.has(node.name) &&
         !node.repositoryTopics.nodes.some((t) => t.topic.name === HIDDEN_TOPIC),
     )
     .map((node): Project => {
@@ -283,7 +295,6 @@ function shape(user: z.infer<typeof UserNode>): GitHubData {
         tech: resolveTech(topics, node.primaryLanguage?.name),
         pushedAt: node.pushedAt,
         featured: FEATURED_ORDER.has(node.name),
-        isPrivate: false,
       };
     })
     .concat(fromPrivate())

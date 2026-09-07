@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { CoverImage } from "@/components/ui/CoverImage";
-import { ArrowLink, GoTo, PrivateTag } from "@/components/ui/Link";
+import { ArrowLink, GoTo } from "@/components/ui/Link";
 import { TechBadges } from "@/components/ui/TechBadges";
 import { COPY } from "@/config/site";
 import type { Project } from "@/lib/github";
@@ -47,7 +47,6 @@ function RepoCard({ project }: { project: Project }) {
       <div className="mt-3 flex shrink-0 flex-col gap-1.5">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-h-item text-accent font-mono">{project.name}</h2>
-          {project.isPrivate && <PrivateTag />}
         </div>
 
         {project.description && (

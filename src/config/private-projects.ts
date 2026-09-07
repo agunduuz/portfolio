@@ -1,15 +1,16 @@
 import type { TechId } from "./tech-icons";
 
 /**
- * Private repo'lardan gösterilecek projeler — **elle küratörlük**.
+ * Elle yazılmış proje bilgileri — **bu dosya GitHub'ı EZER**.
  *
- * Neden API değil: GitHub API'sinden private repo çekmek "hepsini al, sonra
- * ele" demektir; bir gün bir topic eklemeyi unutursan istemediğin bir şey
- * public HTML'e basılır. Bu dosya tam tersi çalışır — **yalnızca buraya
- * yazdığın çıkar.** Private veri için doğru varsayılan budur.
+ * Başlangıçta yalnızca private repo'lar içindi. Artık asıl gerekçe farklı:
+ * buradaki metin, ekran görüntüsü ve teknoloji listesi sahibinin kendi
+ * yazdığı içerik ve GitHub'daki repo açıklamasından daha iyi. Bir proje hem
+ * burada hem GitHub'da varsa (`repo` alanı) API kopyası ELENİR, bu kayıt kazanır.
  *
- * API zaten işe yaramazdı: private repo'nun kapak görseli jenerik GitHub
- * placeholder'ı olarak gelir ve repo linki ziyaretçide 404 verir.
+ * `repo` verilmeyen kayıtlar yalnızca burada yaşar — private bir repo ya da
+ * hiç repo'su olmayan bir iş olabilir. O durumda "Repository ›" linki
+ * render edilmez, çünkü gösterilecek bir adres yok.
  *
  * ⚠ BURAYA YAZDIĞIN HER ŞEY YAYINDA GÖRÜNÜR.
  *   - Müşteri adı, iç kod adı, NDA kapsamındaki detay yazma.
@@ -28,6 +29,16 @@ export type PrivateProject = {
   name: string;
   /** Public kitle için yazılmış açıklama. */
   description: string;
+  /**
+   * Bu projenin GitHub repo adı — **varsa**.
+   *
+   * İki iş yapar:
+   *  1. API'den gelen aynı repo'yu ELER; yoksa proje listede iki kez çıkar
+   *  2. "Repository ›" linkini üretir
+   *
+   * Repo private ya da yoksa bu alanı boş bırak; link render edilmez.
+   */
+  repo?: string;
   /** Canlı dağıtım adresi — "Go to Live" bundan çıkar. Yoksa satır render edilmez. */
   liveUrl: string | null;
   /** Rozet ikonları. Public repo'larda topic'lerden türer, burada elle verilir. */
@@ -53,52 +64,48 @@ export type PrivateProject = {
   order?: number;
 };
 
-/**
- * Boş bırakılabilir — boşken hiçbir şey değişmez, site public repo'larla çalışır.
- *
- * Aşağıdaki iki iskelet YORUM İÇİNDE bekliyor. Değerleri doldurup dizinin
- * açılış ve kapanış yorum işaretlerini kaldırdığın an vitrine girerler.
- * Yorumda kaldıkları sürece hiçbir etkileri yok — uydurma metin yayına
- * çıkmasın diye bilerek böyle bırakıldı.
- */
 export const PRIVATE_PROJECTS: PrivateProject[] = [
-  // ↓↓↓ BU SATIRI SİL (yorumu açar) ↓↓↓
-  /*
   {
-    // Kartta görünen ad — 20 karakteri geçme (ölçüldü, uzun ad kartı taşırır).
     name: "RefTakip",
-
-    // Public kitle için TEK cümle, ~120 karakter. Repo'daki iç açıklamayı
-    // kopyalama; müşteri adı, iç kod adı, NDA detayı yazma.
-    description: "BURAYA YAZ",
-
-    // Canlı adres. Yoksa null yaz — "Go to Live" satırı hiç render edilmez.
-    liveUrl: "https://BURAYA-YAZ",
-
-    // Rozet ikonları. Geçerli değerler: nextjs · typescript · tailwind ·
-    // react · javascript · node · python. Eşleşmeyen teknoloji atlanır.
-    tech: ["nextjs", "typescript", "tailwind"],
-
-    // Opsiyonel kapak. public/projects/ altına koy, yolunu buraya yaz.
-    // Verilmezse düz gri blok görünür — private repo'da GitHub kapak veremez.
-    // cover: "/projects/reftakip.jpg",
-
-    // Vitrin sırası. featured-projects.ts ile AYNI havuz:
-    // 1 → Last Project (kare kapak) · 2 ve 3 → repo ızgarası (geniş kapak).
+    description:
+      "Referral-tracking SaaS for salons and clinics — unique links track every referral from lead to reward.",
+    liveUrl: "https://reftakip.com",
+    tech: ["nextjs", "typescript", "tailwind", "react"],
+    cover: "/projects/reftakip.png",
     order: 1,
-
-    // Sıralama için tarih. order verildiyse yalnızca yedek ölçüt.
-    updated: "2026-09-01",
+    updated: "2026-07-25",
+  },
+  {
+    name: "Codworks",
+    repo: "codworks",
+    description:
+      "An in-depth, Turkish-language reference for modern web development, covering React, JavaScript, and Next.js.",
+    liveUrl: "https://codworks.vercel.app",
+    tech: ["nextjs", "typescript", "tailwind", "react"],
+    cover: "/projects/codworks.png",
+    order: 2,
+    updated: "2026-09-02",
   },
   {
     name: "Vega PDR",
-    description: "BURAYA YAZ",
-    liveUrl: "https://BURAYA-YAZ",
+    repo: "vega-pdr-website",
+    description:
+      "SEO-optimized business site for a car dent-repair shop, with services, gallery, blog and WhatsApp booking.",
+    liveUrl: "https://samsunboyasizgocukduzeltme.com",
     tech: ["nextjs", "typescript", "tailwind"],
-    // cover: "/projects/vega-pdr.jpg",
-    order: 2,
-    updated: "2026-09-01",
+    cover: "/projects/vega-pdr.png",
+    order: 3,
+    updated: "2026-09-05",
   },
-  */
-  // ↑↑↑ BU SATIRI DA SİL ↑↑↑
+  {
+    name: "Gündüz Wedding",
+    repo: "gunduz-wedding",
+    description:
+      "A time-locked wedding photo and video sharing app with server-verified countdown and secure guest uploads.",
+    liveUrl: "https://gunduz-wedding.vercel.app/anilzeynep",
+    tech: ["nextjs", "typescript", "tailwind"],
+    cover: "/projects/gunduz-wedding.png",
+    order: 4,
+    updated: "2026-09-05",
+  },
 ];

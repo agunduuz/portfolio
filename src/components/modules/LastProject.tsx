@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/Card";
 import { CoverImage } from "@/components/ui/CoverImage";
-import { ArrowLink, GoTo, PrivateTag } from "@/components/ui/Link";
+import { ArrowLink, GoTo } from "@/components/ui/Link";
 import { TechBadges } from "@/components/ui/TechBadges";
 import { COPY } from "@/config/site";
 import type { Project } from "@/lib/github";
@@ -38,7 +38,6 @@ export function LastProject({ project }: { project: Project | null }) {
             <h2 className="text-h-item text-accent font-mono">
               {project.name}
             </h2>
-            {project.isPrivate && <PrivateTag />}
           </div>
 
           {project.description && (

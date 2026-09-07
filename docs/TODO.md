@@ -27,8 +27,9 @@ Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünü
 - [x] `src/content/blog/suspense-icinde-olen-animasyon.mdx` — aynı yapıda yeniden yazıldı
 - [x] Üçüncü yazı: `tek-query-parametresi-butun-sayfalari-dinamiklestirdi.mdx`
       (useSearchParams'ın statik render'ı bozması ve CSS `:has()` ile kaçınma)
-- [ ] `src/config/private-projects.ts` — göstermek istediğin private projeler
-      (boş bırakılabilir; ad 20 karakteri geçmesin, uzun ad kartı taşırıyor)
+- [x] `src/config/private-projects.ts` — dört vitrin projesi eklendi: RefTakip,
+      Codworks, Vega PDR, Gündüz Wedding. Dosya adı artık yanıltıcı (içindekiler
+      private değil); istersen `curated-projects.ts` olarak yeniden adlandırılır.
 
 ## Blok 2 — Anahtarlar
 
@@ -58,15 +59,17 @@ Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünü
 
 ## Blok 4 — GitHub tarafı (kod değil, repo ayarı)
 
-Vitrin **sırası** kodda (`src/config/featured-projects.ts`), **açıklama ve
-topic** GitHub'da. İkisi ayrı yer; aşağıdakiler GitHub tarafı.
+Vitrindeki dört projenin metni ve kapağı artık `private-projects.ts`'ten
+geliyor; GitHub açıklamaları onları **etkilemiyor**. Buradaki maddeler
+carousel'de vitrinin ARKASINDAN gelen repo'lar için.
 
-- [ ] [!] `aura-clinic` → açıklama BOŞ, topic BOŞ
-- [ ] [!] `nextjs-projects-library` → açıklama BOŞ, topic BOŞ
-- [ ] [!] `safe-zone` → açıklaması var ama **310 karakter**; kartta 2 satıra
-      kırpılıp cümle ortasında kesiliyor. 120 karaktere indir.
-      (topic'leri tamam: `nextjs14`, `shadcn-ui`, `tailwindcss`, `typescript`)
-- [ ] Gizlemek istediğin repolara `portfolio-hidden` topic'i
+- [ ] Projects carousel'i ilk 8 repo'yu gösteriyor. Vitrinden sonraki 4 sırada
+      hangi repo'lar çıkacaksa onlara GitHub'da **açıklama** ekle — açıklaması
+      olmayan repo kartta yalnızca ad + "Go to Live" olarak görünür.
+- [ ] Aynı repo'lara **topic** ekle (`nextjs`, `typescript`, `tailwindcss`) —
+      teknoloji rozetleri oradan türüyor
+- [ ] Vitrine girmesini istemediğin repo'lara `portfolio-hidden` topic'i
+      (64 public repo var; carousel ilk 8'i alıyor)
 
 ## Blok 5 — Elle test (tarayıcı aracı gerekiyor)
 
@@ -75,6 +78,12 @@ topic** GitHub'da. İkisi ayrı yer; aşağıdakiler GitHub tarafı.
 - [ ] VoiceOver: sayfa değişimi duyuruluyor, sayaç sessiz
 - [ ] `axe` DevTools — sıfır kritik hata
 - [ ] Gerçek mobil cihazda kontrol (CSS yazıldı ama gerçek cihazda denenmedi)
+- [ ] [!] **Kapak görsellerini küçült.** Dördü de 3426×1980 PNG, toplam 5.8 MB
+      (`vega-pdr.png` tek başına 3.1 MB). Kartlarda en geniş kullanım ~440px;
+      yani 8 kat fazla piksel. `next/image` teslimatı hallediyor ama depo
+      şişiyor ve dev'de optimizasyon sayfayı kilitliyor — ekran görüntüsü
+      alırken zaman aşımına uğradı. 1400px genişliğe indirmek yeterli:
+      `sips -Z 1400 public/projects/*.png`
 
 ## Blok 6 — Yayın (Faz 9)
 
