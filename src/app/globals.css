@@ -20,6 +20,11 @@
   --color-danger: #ff6b6b;
   --color-success: var(--color-accent);
 
+  /* GEÇİCİ — yalnızca /faz-kontrol panelinin "önce bunu yap" işareti için.
+     Panel `rm -rf src/app/faz-kontrol` ile kalkarken bu token da silinir.
+     Paletin parçası değil; ürün arayüzünde kullanma. 7.09:1 (surface). */
+  --color-priority: #f0a04b;
+
   /* Faz 2 ölçüm tutanağı (design/home.png, 1920×1426 artboard).
      DESIGN-SYSTEM §6 bu üçünü adlandırıyor ama değerini vermiyordu; piksel
      örneklemesiyle çıkarıldı.
@@ -139,6 +144,80 @@ body {
   grid-template-rows: var(--deck-rows);
 }
 
+/**
+ * Ana bölge giriş geçişi (INTERACTIONS §3.5) — `(deck)/template.tsx`.
+ *
+ * Bilinçli olarak CSS: Motion ile yazıldığında, sayfalar `async` olup Suspense'e
+ * sarılınca animasyon akış sırasında iptal ediliyor ve eleman `opacity: 0`'da
+ * takılı kalıyordu. CSS animasyonunu React'in yeniden render'ı iptal edemez.
+ *
+ * `both` fill şart: 80 ms'lik gecikme boyunca eleman `from` durumunda kalsın,
+ * önce görünüp sonra kaybolmasın.
+ */
+@keyframes deck-main-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.deck-main-enter {
+  animation: deck-main-enter var(--dur-swap) var(--ease-out) 80ms both;
+}
+
+/**
+ * Reduced-motion zemini (CLAUDE.md → pazarlığa kapalı).
+ *
+ * DESIGN-SYSTEM §4: "tüm süreler 0.01ms, sadece opacity, taşıma iptal.
+ * Navigasyon çalışmaya devam eder." JS tarafı `useReducedMotion` ile
+ * hallediliyor (`SatelliteRail`, `useDeckNavigation`); burası CSS tarafının
+ * tamamını kapsıyor — hover `translateY`'leri, geçişler, `scroll-behavior`.
+ *
+ * `!important` gerekli: yardımcı sınıflardan gelen `transition-duration`
+ * değerlerini yenmesi lazım.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .deck-main-enter {
+    animation-duration: 0.01ms;
+    animation-delay: 0s;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/**
+ * Reader modu — `?reader=1` (INTERACTIONS §5.2): ray gizlenir, makale dört
+ * kolona yayılır.
+ *
+ * Neden CSS: bunu JS'te çözmek `useSearchParams()` demekti, o da kalıcı
+ * kabuğun Suspense'e sarılmasını ve TÜM sayfaların statik olmaktan çıkmasını
+ * gerektiriyordu. Bir görünüm anahtarının bedeli bu olamaz.
+ *
+ * İşaret makale sayfasından geliyor: `<div data-reader>`. `:has()` onu görüp
+ * ızgarayı yeniden düzenliyor.
+ *
+ * `!important` şart: `<main>`'in `grid-area`'sı `DeckGrid` tarafından INLINE
+ * yazılıyor ve stylesheet bunu ancak `!important` ile yenebilir.
+ */
+.deck-grid:has([data-reader]) > aside > * {
+  display: none;
+}
+
+.deck-grid:has([data-reader]) > main {
+  grid-area: 1 / 1 / 4 / 5 !important;
+}
+
 @media (max-height: 799px), (max-width: 1023px) {
   .deck-viewport {
     height: auto;
@@ -148,5 +227,35 @@ body {
 
   .deck-grid {
     grid-template-rows: auto;
+  }
+}
+
+/**
+ * Mobil düzen (CLAUDE.md: "Mobilde kartlar alt alta", ROADMAP Faz 8:
+ * "kart sırası ana bölge → uydu").
+ *
+ * Yalnızca satırları `auto` yapmak yetmiyordu: `grid-cols-4` ve kartların
+ * INLINE `grid-area` değerleri duruyor, yani 420px'lik bir ekranda dört tane
+ * 290px kolon → yatay taşma. Burada ızgara tek kolona iniyor ve her kart
+ * kendi sırasını buluyor.
+ *
+ * `!important` şart: `grid-area` inline yazılıyor (`DeckGrid`, `SatelliteRail`)
+ * ve stylesheet bunu ancak `!important` ile yenebilir.
+ *
+ * `<main>` DOM'da raydan SONRA geliyor — masaüstünde grid-area sırayı
+ * belirlediği için sorun değil. Mobilde `order: -1` onu öne alır: ziyaretçi
+ * önce sayfanın kendi içeriğini görmeli, uydu kartları sonra.
+ */
+@media (max-width: 1023px) {
+  .deck-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .deck-grid > * {
+    grid-area: auto !important;
+  }
+
+  .deck-grid > main {
+    order: -1;
   }
 }

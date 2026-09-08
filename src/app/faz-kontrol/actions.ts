@@ -1,11 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { toggleItem, type ToggleResult } from "./roadmap";
+import { toggleItem, type Source, type ToggleResult } from "./roadmap";
 
 /** GEÇİCİ — Faz Kontrol paneli. Proje bitince bu klasör silinir. */
 
 export async function toggleTask(
+  source: Source,
   line: number,
   expectedText: string,
 ): Promise<ToggleResult> {
@@ -13,7 +14,7 @@ export async function toggleTask(
     return { ok: false, error: "Faz Kontrol yalnızca geliştirmede çalışır." };
   }
 
-  const result = await toggleItem(line, expectedText);
+  const result = await toggleItem(source, line, expectedText);
   if (result.ok) revalidatePath("/faz-kontrol");
   return result;
 }

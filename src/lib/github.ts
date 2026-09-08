@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { githubEnv, hasGitHubEnv } from "./env.server";
 import { FEATURED } from "@/config/featured-projects";
-import { PRIVATE_PROJECTS } from "@/config/private-projects";
+import { CURATED_PROJECTS } from "@/config/curated-projects";
 import { resolveTech, type TechId } from "@/config/tech-icons";
 
 /**
@@ -30,7 +30,12 @@ const PORTFOLIO_QUERY = /* GraphQL */ `
       url
       avatarUrl(size: 240)
       repositories(
-        first: 20
+        # 50, keyfi bir sayı değil: 64 public repo var ve vitrindeki
+        # safe-zone pushedAt sıralamasında 9. sırada (son push 2024).
+        # first:20 ile bugün sığıyor ama 12 repoya daha push atılırsa
+        # pencereden düşer ve vitrin slotu sessizce boşalır — FEATURED
+        # sıralaması onu kurtaramaz, çünkü veri hiç gelmemiş olur.
+        first: 50
         privacy: PUBLIC
         isFork: false
         orderBy: { field: PUSHED_AT, direction: DESC }
@@ -118,8 +123,6 @@ export type Project = {
   tech: TechId[];
   pushedAt: string;
   featured: boolean;
-  /** Kartta "Private" etiketi çıkarır ve repo linkini bastırır. */
-  isPrivate: boolean;
 };
 
 export type Profile = {
@@ -145,8 +148,8 @@ const PROFILE_URL = `https://github.com/${GITHUB_USER}`;
  * repo açıklamasıdır; uydurma açıklama yazmak veriyi ikiye böler. Açıklama
  * boşsa kart o satırı zaten atlar.
  *
- * Private projeler fallback'te de görünür — onların kaynağı zaten API değil,
- * `private-projects.ts`. API'nin çökmesi onları etkilemez.
+ * Vitrin projeleri fallback'te de görünür — onların kaynağı zaten API değil,
+ * `curated-projects.ts`. API'nin çökmesi onları etkilemez.
  *
  * Fonksiyon, sabit değil: `fromPrivate()` modül seviyesindeki `FEATURED_ORDER`
  * map'ine bakıyor ve o aşağıda tanımlı. Sabit olsaydı modül yüklenirken TDZ'ye
@@ -172,7 +175,6 @@ function fallback(): GitHubData {
     tech: [],
     pushedAt: new Date(0).toISOString(),
     featured: true,
-    isPrivate: false,
   }))
     .concat(fromPrivate())
     .sort(byFeaturedThenRecent);
@@ -197,13 +199,21 @@ function fallback(): GitHubData {
 /**
  * Elle küratörlük sırası; listede olmayan repo `Infinity` alır ve arkaya düşer.
  *
+ * **İki kaynaktan besleniyor.** Vitrin artık yalnızca public repolardan
+ * oluşmuyor: private projeler de sıraya girebiliyor ve ikisi TEK havuzda
+ * yarışıyor. Ayrı iki sıra tutmak "1. sırada iki proje var" durumunu mümkün
+ * kılardı; slot dağılımı (1 → Last Project, 2–3 → ızgara) buna izin vermez.
+ *
  * `Map<string, …>` açıkça yazılıyor: `FEATURED` `as const` olduğu için anahtar
- * tipi üç repo adının birleşimine kilitleniyor ve GitHub'dan gelen herhangi bir
+ * tipi repo adlarının birleşimine kilitleniyor ve GitHub'dan gelen herhangi bir
  * `string` ile sorgulanamıyor.
  */
-const FEATURED_ORDER = new Map<string, number>(
-  FEATURED.map((f) => [f.repo, f.order]),
-);
+const FEATURED_ORDER = new Map<string, number>([
+  ...FEATURED.map((f) => [f.repo, f.order] as [string, number]),
+  ...CURATED_PROJECTS.filter((p) => p.order !== undefined).map(
+    (p) => [p.name, p.order as number] as [string, number],
+  ),
+]);
 const FEATURED_LIVE = new Map<string, string | null>(
   FEATURED.map((f) => [f.repo, f.live]),
 );
@@ -211,15 +221,30 @@ const FEATURED_LIVE = new Map<string, string | null>(
 const HIDDEN_TOPIC = "portfolio-hidden";
 
 /**
- * Elle yazılmış private projeleri API'den gelenlerle aynı şekle sokar.
- * Sıralama, slot dağılımı ve kartlar ikisini ayırt etmez — tek fark
- * `isPrivate` ve `url`'ün null olması.
+ * Elle yazılmış bir kaydın sahiplendiği repo adları.
+ *
+ * Bu eleme olmasaydı proje listede İKİ KEZ çıkardı: bir kez API'den (public
+ * repo olarak), bir kez `curated-projects.ts`'ten. Elle yazılan kayıt kazanır
+ * çünkü açıklaması, kapağı ve teknoloji listesi GitHub'dakinden iyi.
+ */
+const OVERRIDDEN_REPOS = new Set(
+  CURATED_PROJECTS.map((p) => p.repo).filter(
+    (r): r is string => r !== undefined,
+  ),
+);
+
+/**
+ * Elle küratörlük edilmiş proje kayıtlarını API'den gelenlerle aynı şekle sokar.
+ * Sıralama, slot dağıtımı ve kartlar ikisini ayırt etmez.
+ *
+ * `repo` verilmişse "Repository ›" linki üretilir; verilmemişse `url` null
+ * kalır ve link hiç render edilmez — gösterilecek bir adres yok.
  */
 function fromPrivate(): Project[] {
-  return PRIVATE_PROJECTS.map((p) => ({
+  return CURATED_PROJECTS.map((p) => ({
     name: p.name,
     description: p.description,
-    url: null,
+    url: p.repo ? `${PROFILE_URL}/${p.repo}` : null,
     liveUrl: p.liveUrl,
     coverUrl: p.cover ?? null,
     hasCustomCover: Boolean(p.cover),
@@ -228,8 +253,7 @@ function fromPrivate(): Project[] {
     topics: [],
     tech: [...p.tech],
     pushedAt: new Date(p.updated).toISOString(),
-    featured: FEATURED_ORDER.has(p.name),
-    isPrivate: true,
+    featured: p.order !== undefined,
   }));
 }
 
@@ -250,6 +274,7 @@ function shape(user: z.infer<typeof UserNode>): GitHubData {
     .filter(
       (node) =>
         !node.isArchived &&
+        !OVERRIDDEN_REPOS.has(node.name) &&
         !node.repositoryTopics.nodes.some((t) => t.topic.name === HIDDEN_TOPIC),
     )
     .map((node): Project => {
@@ -270,7 +295,6 @@ function shape(user: z.infer<typeof UserNode>): GitHubData {
         tech: resolveTech(topics, node.primaryLanguage?.name),
         pushedAt: node.pushedAt,
         featured: FEATURED_ORDER.has(node.name),
-        isPrivate: false,
       };
     })
     .concat(fromPrivate())

@@ -3,13 +3,18 @@
 import { useOptimistic, useState, useTransition } from "react";
 import { toggleTask } from "./actions";
 import { Inline } from "./inline";
-import type { RoadmapPhase } from "./roadmap";
+import type { RoadmapPhase, Source } from "./roadmap";
 
 /** GEÇİCİ — Faz Kontrol paneli. Proje bitince bu klasör silinir. */
 
 function countOf(phases: RoadmapPhase[]) {
   const items = phases.flatMap((p) => p.items);
-  return { done: items.filter((i) => i.done).length, total: items.length };
+  return {
+    done: items.filter((i) => i.done).length,
+    total: items.length,
+    /** Açık ve "önce" işaretli — bitmiş bir madde artık sıradaki adım değil. */
+    priority: items.filter((i) => i.priority && !i.done).length,
+  };
 }
 
 function Bar({ done, total }: { done: number; total: number }) {
@@ -32,14 +37,16 @@ function Bar({ done, total }: { done: number; total: number }) {
   );
 }
 
-function Check({ done }: { done: boolean }) {
+function Check({ done, priority }: { done: boolean; priority: boolean }) {
   return (
     <span
       aria-hidden
       className={`mt-0.5 grid size-[18px] shrink-0 place-items-center rounded-[5px] border transition-colors duration-(--dur-micro) ${
         done
           ? "border-accent bg-accent text-bg"
-          : "border-border-strong text-transparent"
+          : priority
+            ? "border-priority text-transparent"
+            : "border-border-strong text-transparent"
       }`}
     >
       <svg viewBox="0 0 12 12" className="size-3" fill="none">
@@ -55,7 +62,16 @@ function Check({ done }: { done: boolean }) {
   );
 }
 
-export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
+export function PhaseList({
+  phases,
+  source,
+  title,
+}: {
+  phases: RoadmapPhase[];
+  /** Hangi dosyaya yazılacağı buradan gelir; serbest yol asla istemciden gelmez. */
+  source: Source;
+  title: string;
+}) {
   const [optimisticPhases, applyToggle] = useOptimistic(
     phases,
     (state: RoadmapPhase[], line: number) =>
@@ -87,7 +103,7 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
     setError(null);
     startTransition(async () => {
       applyToggle(line);
-      const result = await toggleTask(line, text);
+      const result = await toggleTask(source, line, text);
       if (!result.ok) setError(result.error);
     });
   }
@@ -104,11 +120,22 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
     <div className="flex flex-col gap-4">
       <header className="border-border bg-surface rounded-card flex flex-wrap items-center gap-x-5 gap-y-3 border p-6">
         <div className="mr-auto">
-          <h1 className="font-display text-h-card text-text">Faz Kontrol</h1>
+          <h2 className="font-display text-h-card text-text">{title}</h2>
           <p className="text-micro text-text-3 mt-1">
-            <code className="font-mono">docs/ROADMAP.md</code> · geliştirme
-            aracı, üretime çıkmaz
+            <code className="font-mono">
+              docs/{source === "roadmap" ? "ROADMAP" : "TODO"}.md
+            </code>{" "}
+            · geliştirme aracı, üretime çıkmaz
           </p>
+
+          {overall.priority > 0 && (
+            <p className="text-micro text-priority mt-2 flex items-center gap-2">
+              <span className="border-priority rounded-inner border px-1.5 py-0.5">
+                önce
+              </span>
+              {overall.priority} madde önerilen sıradaki adım
+            </p>
+          )}
         </div>
 
         <div className="text-right">
@@ -141,7 +168,7 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
             key={phase.number}
             className="border-border bg-surface rounded-card overflow-hidden border"
           >
-            <h2>
+            <h3>
               <button
                 type="button"
                 onClick={() => toggleOpen(phase.number)}
@@ -188,7 +215,7 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
                   />
                 </svg>
               </button>
-            </h2>
+            </h3>
 
             {isOpen && (
               <div className="border-border border-t px-6 py-4">
@@ -206,14 +233,23 @@ export function PhaseList({ phases }: { phases: RoadmapPhase[] }) {
                         onClick={() => toggle(item.line, item.text)}
                         className="hover:bg-surface-hover focus-visible:ring-accent focus-visible:ring-offset-surface text-body rounded-inner flex w-full cursor-pointer items-start gap-3 px-2 py-1.5 text-left transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
                       >
-                        <Check done={item.done} />
+                        <Check done={item.done} priority={item.priority} />
                         <span
                           className={
                             item.done
                               ? "text-text-3 line-through"
-                              : "text-text-2"
+                              : item.priority
+                                ? "text-priority"
+                                : "text-text-2"
                           }
                         >
+                          {/* Bitmiş bir madde artık "sıradaki adım" değil;
+                              öncelik rozeti yalnızca açık maddede görünür. */}
+                          {item.priority && !item.done && (
+                            <span className="border-priority text-priority text-micro rounded-inner mr-2 border px-1.5 py-0.5 align-middle">
+                              önce
+                            </span>
+                          )}
                           <Inline>{item.text}</Inline>
                         </span>
                       </button>

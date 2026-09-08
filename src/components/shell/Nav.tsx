@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Download } from "lucide-react";
-import { COPY, NAV, SITE } from "@/config/site";
+import { NAV } from "@/config/site";
+import { ResumeMenu } from "./ResumeMenu";
 
 /**
  * Gerçek `<Link>`'ler — deck sadece bir kısayol, navigasyonun kendisi değil.
@@ -39,14 +39,7 @@ export function Nav() {
           })}
         </ul>
 
-        <a
-          href={SITE.resume}
-          download
-          className="bg-elevated border-border-strong text-text text-label hover:bg-surface-hover focus-visible:ring-accent focus-visible:ring-offset-surface rounded-inner flex items-center gap-2 border px-4 py-2.5 transition-colors duration-(--dur-micro) focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          <Download aria-hidden className="size-4" />
-          {COPY.nav.resume}
-        </a>
+        <ResumeMenu />
       </div>
     </nav>
   );

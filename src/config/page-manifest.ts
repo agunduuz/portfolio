@@ -80,6 +80,16 @@ export const GRID_ROWS = {
 
 const FALLBACK: PageLayout = MANIFEST["/"];
 
+/**
+ * `?reader=1` burada ELE ALINMAZ, CSS'te (globals.css → `[data-reader]`).
+ *
+ * Gerekçe: query parametresini okumak `useSearchParams()` demek, o da kalıcı
+ * kabuğun Suspense'e sarılmasını zorunlu kılıyor ve TÜM sayfaları statik
+ * olmaktan çıkarıyordu (build hatası: "useSearchParams() should be wrapped in
+ * a suspense boundary"). Reader modu yalnızca bir görünüm anahtarı; bunun
+ * bedeli her route'un dinamikleşmesi olamaz.
+ */
+
 /** `/blog/nextjs-rehberi` → `/blog/[slug]` eşlemesi dahil. */
 export function resolveLayout(pathname: string): PageLayout {
   if (pathname.startsWith("/blog/")) return MANIFEST["/blog/[slug]"];

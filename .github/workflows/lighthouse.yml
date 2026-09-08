@@ -1,0 +1,37 @@
+name: Lighthouse
+
+# Performans bütçesi kod incelemesiyle korunmaz, ölçümle korunur.
+# PR'larda ve main'e push'ta çalışır; üretim URL'ini değil, PR'ın kendi
+# build'ini ölçer — regresyonu birleştirmeden önce görmek istiyoruz.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # GitHub sırları olmadan da build geçmeli: lib/github.ts token yoksa
+      # fallback'e düşer. Bu, Faz 3'ün bitiş kriterinin CI'daki karşılığı.
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://anilgunduz.dev
+          NEXT_PUBLIC_CAREER_START: "2021-09-01T00:00:00Z"
+
+      - name: Lighthouse
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: ./.lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true

@@ -18,6 +18,18 @@ export function DeckShell({ children }: { children: ReactNode }) {
         id="deck-shell"
         className="mx-auto flex h-full max-w-(--shell-max) flex-col gap-(--gap-row) py-(--pad-shell-y)"
       >
+        {/*
+          Klavye kullanıcısı nav'ı atlayabilmeli. Görünmez ama ODAKLANINCA
+          belirir — `display: none` olsaydı odak sırasına hiç girmezdi.
+          Hedef `#main`, `DeckGrid`'in `tabIndex={-1}` taşıyan `<main>`'i.
+        */}
+        <a
+          href="#main"
+          className="text-label text-bg bg-accent rounded-inner focus:ring-accent focus:ring-offset-bg sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2.5 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+        >
+          İçeriğe geç
+        </a>
+
         <Nav />
         {children}
         <Footer />

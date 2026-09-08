@@ -13,6 +13,22 @@ Ters sırada yaparsan her sayfayı yeniden yazmak zorunda kalırsın.
 Bu faz, `.env.local` içeriği herhangi bir yere (sohbet, log, commit, ekran görüntüsü)
 sızmışsa zorunludur.
 
+> **Denetlendi — tetikleyici koşul GERÇEKLEŞMEMİŞ, rotasyon gerekmiyor.**
+>
+> | Kontrol                                                      | Sonuç                                                                        |
+> | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+> | `.env.local` hiç commit edilmiş mi?                          | Hayır. Git geçmişinde yalnızca `.env.example` var (boş değerlerle, kasıtlı). |
+> | Geçmişte sır formatında dize (`github_pat_`, `ghp_`, `re_…`) | Hiçbir commit'te eşleşme yok.                                                |
+> | `.env.local` şu an ne taşıyor?                               | Yalnızca iki public değişken; hiçbir sunucu sırrı hiç girilmemiş.            |
+> | `.gitignore` koruması                                        | `.gitignore:34` → `.env*` yakalıyor.                                         |
+>
+> **Sınır:** bu denetim yalnızca BU DEPOYU kapsar. Bir anahtarı başka bir yere
+> (başka bir sohbet, ekran görüntüsü, CI logu) yapıştırdıysan bunu buradan
+> göremem — o durumda maddeler geçerlidir ve rotasyon şarttır.
+>
+> Anahtarlar ilk kez girildikten sonra bu faz yeniden anlamlı hale gelir; sır
+> sızarsa aşağıdaki liste uygulanır.
+
 - [ ] GitHub PAT iptal, yenisi üretildi (fine-grained, yalnızca `Metadata: Read`)
 - [ ] Resend API anahtarı silindi, yenisi üretildi
 - [ ] Upstash REST token rotate edildi
@@ -93,16 +109,14 @@ carousel indeksi ve form taslağı korunuyor.
 - [x] `layout.tsx`'te veri, ray + ana bölgeye dağıtım
       (tek kaynak olduğu için `Promise.all` gerekmedi; Faz 5'te MDX eklenince gelir)
 - [x] `api/revalidate/route.ts` — `timingSafeEqual` imza doğrulaması
-- [ ] Kapak görselleri `next/image`, `sizes` doğru
-      — `ui/CoverImage.tsx` yazıldı ama TÜKETİCİSİ YOK: kapak kullanan modüller
-      (`LastProject`, `RepoGrid`) Faz 4'te geliyor. `sizes` doğruluğu çağıranın
-      işi olduğu için madde açık bırakıldı.
+- [x] Kapak görselleri `next/image`, `sizes` doğru (Faz 4'te tüketicileriyle
+      birlikte tamamlandı)
 
 **Bitiş:** token'ı boz, dev sunucusunu yeniden başlat — site hâlâ render ediyor.
 ✅ Doğrulandı: `.env.local`'de GitHub anahtarı hiç yokken site fallback ile render
 ediyor, Projects kartı `featured-projects.ts` verisini gösteriyor.
 
-**Private projeler (Faz 3 eki).** `config/private-projects.ts` — elle küratörlük,
+**Private projeler (Faz 3 eki).** `config/curated-projects.ts` — elle küratörlük,
 opt-in. GitHub API'sinden private repo ÇEKİLMİYOR; sebebi opt-out modelin private
 veri için yanlış varsayılan olması (bir `portfolio-hidden` unutulursa yayına çıkar).
 API zaten işe yaramazdı: private repo'nun kapak görseli jenerik placeholder olarak
@@ -117,72 +131,136 @@ kendi grubunu doğruluyor. `hasGitHubEnv()` token yokluğunu sessiz fallback'e �
 
 ## Faz 4 — Hakkımda ve Projeler (1–2 oturum)
 
-- [ ] `/hakkimda` — Hero (`lg`) + Summary/Job History kartı
+- [x] `/hakkimda` — Hero (`lg`) + Summary/Job History kartı (`AboutBody`)
 - [ ] `config/about.ts` gerçek biyografi ve iş geçmişi
-- [ ] `/projeler` — ray **sola** geçiyor
-- [ ] `LastProject` — kare kapak, açıklama, Go to Live, rozetler, Repository ›
-- [ ] `RepoGrid` — 2'li alt grid, geniş kapaklar, sağ altta Repository ›
-- [ ] `GitHubProfile` — avatar, kullanıcı adı, repo sayısı, bio, Go to Profile
+      — **SAHİBİNİ BEKLİYOR.** Yapı ve boş durum hazır; uydurma biyografi
+      yazılmadı çünkü uydurma iş geçmişi lorem ipsum'dan beterdir.
+- [x] `/projeler` — ray **sola** geçiyor
+- [x] `LastProject` — kare kapak, açıklama, Go to Live, rozetler, Repository ›
+- [x] `RepoGrid` — 2'li alt grid, geniş kapaklar, sağ altta Repository ›
+- [x] `GitHubProfile` — avatar, kullanıcı adı, repo sayısı, bio, Go to Profile
 
 **Bitiş:** `/hakkimda` → `/projeler` geçişinde ray ekranın bir yanından diğerine kayıyor.
 
+**Faz 4'te çıkan iki gerçek hata (ikisi de üretim build'inde doğrulandı):**
+
+1. **Ana bölge dört ekranda da GÖRÜNMEZDİ.** `template.tsx` Motion'ın
+   `initial/animate`'ini kullanıyordu; Faz 3'te sayfalar `async` olunca Next
+   onları Suspense'e sardı ve akış sırasında giriş animasyonu iptal edilip bir
+   daha çalışmadı — eleman `opacity: 0`'da kaldı. Geçiş CSS'e taşındı
+   (`.deck-main-enter`, globals.css). Yan fayda: `template.tsx` artık Server
+   Component.
+2. **Çıplak `fr` satırları taşırıyordu.** `1fr` aslında `minmax(auto,1fr)`;
+   otomatik alt sınır satırın içerikten küçülmesini engelliyor. `/projeler`
+   626px'lik ana bölgeye 1071px içerik sokuyordu. Satırlar `minmax(0,…)` oldu
+   ve kapaklar yüksekliği GENİŞLİKTEN türetmeyi bıraktı (`CoverImage` `fill`
+   modu) — `aspect-[16/7]` kısa ekranda küçülemediği için kart taşıyordu.
+
 ## Faz 5 — Blog (2 oturum)
 
-- [ ] `lib/mdx.ts` — frontmatter Zod şeması, `getAllPosts`, `getPost`
+- [x] `lib/mdx.ts` — frontmatter Zod şeması, `getAllPosts`, `getPost`
 - [ ] 3 örnek MDX yazısı (gerçek içerik, lorem yok)
-- [ ] `/blog` — `LastWriting` + `PostList` (3 kart) + `Pagination`
-- [ ] Sayfalama `?page=N`, sınır dışı → `notFound()`
-- [ ] `/blog/[slug]` — makale kartı, `data-scrollable`
-- [ ] `useProxiedWheel` — sayfa geneli wheel makaleye yönleniyor
-- [ ] `ReadingProgress` — kart scroll'una bağlı
-- [ ] `Esc` ile `/blog`'a dönüş, deck kapalı
-- [ ] İçindekiler, kod blokları + kopyala, prev/next
-- [ ] `?reader=1` tam ekran okuma modu (>2000 kelime)
-- [ ] `not-found.tsx` + `error.tsx`
+      — **2 yazı var, SAHİBİ GÖZDEN GEÇİRMELİ.** İkisi de bu projede gerçekten
+      ölçülmüş bulgular üzerine yazıldı (`minmax(0,1fr)` taşması, Suspense
+      içinde ölen Motion animasyonu). İçerik doğru ama **künye Anıl'ın**;
+      yayından önce kendi sesiyle yeniden yazılmalı ya da silinmeli.
+- [x] `/blog` — `LastWriting` + `PostList` (3 kart) + `Pagination`
+- [x] Sayfalama `?page=N`, sınır dışı → `notFound()`
+      (bozuk girdi `?page=abc` 1. sayfaya düşer, 404 vermez — yalnızca
+      sınır dışı SAYI 404'tür)
+- [x] `/blog/[slug]` — makale kartı, `data-scrollable`
+- [x] `useProxiedWheel` — sayfa geneli wheel makaleye yönleniyor
+- [x] Okuma ilerleme çubuğu — kart scroll'una bağlı (`ArticleShell`)
+- [x] `Esc` ile `/blog`'a dönüş, deck kapalı
+- [x] İçindekiler, kod blokları + kopyala, prev/next
+- [x] `?reader=1` tam ekran okuma modu (>2000 kelime)
+      — CSS ile (`:has([data-reader])`), JS ile değil: `useSearchParams()`
+      kalıcı kabuğu Suspense'e sarmayı ve TÜM sayfaların statik olmaktan
+      çıkmasını gerektiriyordu. Bir görünüm anahtarının bedeli bu olamaz.
+- [x] `not-found.tsx` + `error.tsx` (kök seviyede, deck kabuğunun dışında —
+      bulunamayan bir sayfada altı uydu kart göstermek gürültü olurdu)
+
+**Faz 5 doğrulaması:** makale 200, olmayan slug 404, `Esc` → `/blog`, wheel
+sayfanın boşluğundan makaleye yönleniyor, ilerleme çubuğu kart scroll'unu
+izliyor, kod blokları vurgulu ve kopyalanabilir.
 
 ## Faz 6 — Formlar (1 oturum)
 
-- [ ] `actions/subscribe.ts` + `actions/job-offer.ts`
-- [ ] Zod şemaları, alan bazlı hata mesajları
-- [ ] Honeypot + zaman eşiği + Upstash rate limit
-- [ ] Resend + React Email şablonu
-- [ ] `useActionState` / `useFormStatus` — pending/success/error
-- [ ] Başarılı gönderimde `DraftProvider` taslağı temizleniyor
-- [ ] JS kapalı testi
-- [ ] Form dolu durumdayken sayfa değişimi testi
+- [x] `actions/subscribe.ts` + `actions/job-offer.ts`
+- [x] Zod şemaları, alan bazlı hata mesajları
+- [x] Honeypot + zaman eşiği + Upstash rate limit (`lib/rate-limit.ts`)
+- [x] Resend — **düz metin, React Email DEĞİL.** Sapma bilinçli: React Email
+      yeni bir bağımlılık demek ve performans bütçesi Motion dışında ekleme
+      yasaklıyor. Bu e-posta yalnızca site sahibine gidiyor; düz metin hem
+      yeterli hem istemci uyumluluk derdi yok.
+- [x] `useActionState` / `useFormStatus` — pending/success/error
+- [x] Başarılı gönderimde `DraftProvider` taslağı temizleniyor
+- [x] JS kapalı testi — `<form method="POST">` sunucudan geliyor (Next
+      progressive enhancement), zaman damgası boşken form bot sayılmıyor
+- [x] Form dolu durumdayken sayfa değişimi testi (Faz 2'de ölçüldü)
+
+**Faz 6 notu — anahtarsız davranış.** Resend/Upstash tanımlı değilse:
+`isRateLimited` sessizce `false` döner (sınırlama kapalı, form çalışır) ama
+`sendMail` KULLANICIYA SÖYLER: "E-posta servisi henüz bağlı değil." Sessizce
+"gönderildi" demek yalan olurdu — kullanıcı cevap bekler, gelmez.
 
 ## Faz 7 — SEO ve performans (1 oturum)
 
-- [ ] Route başına `generateMetadata`, sayfalama başlıkları dahil
-- [ ] Semantik iskelet: `<main>` / `<aside>`, tek `<h1>`, kart başlıkları `<h3>`
-- [ ] `sitemap.ts`, `robots.ts`, `rss.xml`
-- [ ] JSON-LD: `Person`, `WebSite`, `ItemList`, `BlogPosting`, `BreadcrumbList`
-- [ ] `opengraph-image.tsx` — ana sayfa + yazı başına dinamik
-- [ ] Bundle analizi; `SatelliteRail` client ağacı küçültüldü
+- [x] Route başına `generateMetadata`, sayfalama başlıkları dahil
+      (`/blog?page=2` → "Yazılar — Sayfa 2", kendini işaret eden canonical)
+- [x] Semantik iskelet: `<main>` / `<aside>`, tek `<h1>`, kart başlıkları `<h3>`
+      — beş route'ta da ölçüldü: h1=1, main=1, aside=1
+- [x] `sitemap.ts`, `robots.ts`, `rss.xml` (üçü de 200, doğru content-type)
+- [x] JSON-LD: `Person`, `WebSite`, `ItemList`, `Blog`, `BlogPosting`,
+      `BreadcrumbList` — tek `@graph`, `</script>` enjeksiyonuna kapalı
+- [x] `opengraph-image.tsx` — ana sayfa + yazı başına dinamik
+- [x] Bundle analizi — **bütçe aşılıyor ve aşılmaya devam edecek**, bkz. SEO §7
+      ölçüm tutanağı. Çerçeve tabanı tek başına 246 KB; hedef 120 KB.
+      `LazyMotion` denendi, işe yaramadı (297 KB'a çıktı), geri alındı.
 - [ ] Geçiş sırasında uzun görev (>50ms) yok — Performance kaydı ile doğrula
-- [ ] Lighthouse ≥ 95 (4 kategori)
-- [ ] `SEO.md` kontrol listesi tamamlandı
+      — **elle yapılmalı**, DevTools kaydı gerektiriyor
+- [ ] Lighthouse ≥ 95 (4 kategori) — **elle yapılmalı**, yayın URL'inde
+- [ ] `SEO.md` kontrol listesi tamamlandı — yayın anındaki maddeler (HTTPS,
+      www yönlendirmesi, Rich Results Test) Faz 9'a bağlı
 
 ## Faz 8 — Erişilebilirlik ve cila (1 oturum)
 
-- [ ] Klavyeyle tam gezinti (deck, carousel, kart içi scroll, sayfalama)
-- [ ] Kontrast denetimi — `text-2`/`text-3` kullanımları
-- [ ] Ekran okuyucu testi (VoiceOver): sayfa değişimi duyurusu, sayaç sessiz
-- [ ] `axe` DevTools sıfır kritik hata
-- [ ] Reduced motion testi
-- [ ] `grep -ri "lorem" src content` → boş
-- [ ] Mobil düzen: kart sırası ana bölge → uydu
-- [ ] Chanel kuralı: her ekrandan bir fazlalık çıkarıldı
+- [x] Klavyeyle tam gezinti — **`#main`'e atlama linki eklendi** (yoktu);
+      deck Page/Arrow, carousel Sol/Sağ, kart içi scroll `tabIndex={0}`,
+      sayfalama gerçek `<Link>`
+- [x] Kontrast denetimi — hepsi WCAG formülüyle hesaplandı, tablo
+      DESIGN-SYSTEM §1'de. Gövde metni her zeminde geçiyor. **Buton metni
+      2.54:1 ile AA'yı geçmiyor**; tasarım kararı olduğu için değiştirilmedi
+      ama dokümandaki "bu erişilebilirlik sorunu değil" iddiası düzeltildi.
+- [ ] Ekran okuyucu testi (VoiceOver) — **elle yapılmalı**
+- [ ] `axe` DevTools sıfır kritik hata — **elle yapılmalı**
+- [x] Reduced motion — JS tarafı `useReducedMotion`, CSS tarafı için global
+      `prefers-reduced-motion` bloğu eklendi (hover `translateY`'leri dahil)
+- [x] `grep -ri "lorem" src` → yalnızca "lorem yasak" diyen yorumlar
+- [x] Mobil düzen: kart sırası ana bölge → uydu. **Eksikti**: medya sorgusu
+      yalnızca satırları `auto` yapıyordu, `grid-cols-4` ve inline `grid-area`
+      duruyordu — 420px'de dört 290px kolon, yani yatay taşma. Artık tek kolon
+      ve `<main>` `order: -1` ile önde.
+- [x] Chanel kuralı: uydu Projects kartında repo linki yok (yalnızca "Go to
+      Live" + rozet), liste kartlarında "Go to Detail" metin — kartın tamamı
+      zaten link, ikinci bir `<a>` hem fazlalık hem geçersiz HTML olurdu
 
 ## Faz 9 — Yayın
 
-- [ ] Vercel'e bağlandı, env değişkenleri girildi
-- [ ] Alan adı + HTTPS + `www` yönlendirmesi
-- [ ] GitHub webhook üretime yönlendirildi
-- [ ] Search Console + Bing Webmaster + sitemap gönderimi
-- [ ] Vercel Speed Insights açık
-- [ ] Lighthouse CI GitHub Actions'ta
+- [ ] Vercel'e bağlandı, env değişkenleri girildi — **sahibi**
+- [ ] Alan adı + HTTPS + `www` yönlendirmesi — **sahibi**
+- [ ] GitHub webhook üretime yönlendirildi — **sahibi**
+      (uç hazır: `POST /api/revalidate`, `x-hub-signature-256` doğruluyor)
+- [ ] Search Console + Bing Webmaster + sitemap gönderimi — **sahibi**
+- [ ] Vercel Speed Insights açık — **sahibi** (paket eklenmedi: performans
+      bütçesi Motion dışında bağımlılık yasaklıyor, Vercel'de tek tıkla açılır)
+- [x] Lighthouse CI GitHub Actions'ta (`.github/workflows/lighthouse.yml`)
+      — PR'da ve main'e push'ta çalışır, PR'ın kendi build'ini ölçer;
+      erişilebilirlik ve SEO eşiği `error`, performans `warn` (bütçe aşımı
+      bilinen ve belgelenmiş, bkz. SEO §7)
 - [ ] Faz Kontrol paneli kaldırıldı (`rm -rf src/app/faz-kontrol`)
+      — **yayın günü**; o zamana kadar faz takibi için duruyor, `robots.ts`
+      zaten indekslemeyi kapatıyor
 
 ---
 

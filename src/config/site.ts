@@ -41,7 +41,25 @@ export const SITE = {
   url: publicEnv.NEXT_PUBLIC_SITE_URL,
   location: "Samsun, Türkiye",
   email: CONTACT,
-  resume: "/anil-gunduz-cv.pdf",
+  /**
+   * İki dil, iki dosya. `download` adı dosya adından AYRI: ziyaretçinin
+   * indirdiği dosya `anil_gunduz_frontend_EN_CV.pdf` değil, ne olduğu belli
+   * bir ad taşısın.
+   */
+  resumes: [
+    {
+      lang: "tr" as const,
+      label: "Türkçe",
+      href: "/resume/anil_gunduz_frontend_CV.pdf",
+      download: "Anil-Gunduz-CV-TR.pdf",
+    },
+    {
+      lang: "en" as const,
+      label: "English",
+      href: "/resume/anil_gunduz_frontend_EN_CV.pdf",
+      download: "Anil-Gunduz-CV-EN.pdf",
+    },
+  ],
   careerStart: publicEnv.NEXT_PUBLIC_CAREER_START,
   socials: SOCIALS,
 } as const;
@@ -73,12 +91,20 @@ export const COPY = {
     more: "More",
     empty: "No project to show here yet — the code lives on GitHub.",
     goTo: "Live",
+    // `/projeler` ana bölgesi (Faz 4)
+    last: "Last Project.",
+    repository: "Repository",
+    repoCount: "Repository",
+    profile: "Profile",
   },
   writings: {
     title: "Writings.",
     more: "More",
     empty: "First writing is on its way. Subscribe and I'll let you know.",
     goTo: "Writing.",
+    // `/blog` ana bölgesi (Faz 5)
+    last: "Last Writing.",
+    detail: "Detail",
   },
   aboutMe: {
     title: "About Me.",
@@ -113,6 +139,16 @@ export const COPY = {
     submit: "Enter.",
     success: "Kayıt tamam. İlk yazıda görüşürüz.",
   },
-  nav: { resume: "Resume" },
+  /**
+   * `/hakkimda` ana bölgesi. Başlıklar tasarımdan ve NOKTASIZ — nokta kuralı
+   * kart başlıklarına ait, sayfa içi `<h2>`'lere değil.
+   */
+  about: {
+    summary: "Summary",
+    jobHistory: "Job History",
+    label: "Hakkımda içeriği",
+    empty: "Biyografi yakında — `config/about.ts` doldurulmayı bekliyor.",
+  },
+  nav: { resume: "Resume", resumeMenu: "CV dili seçimi" },
   footer: { rights: "All rights reserved." },
 } as const;

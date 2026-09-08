@@ -4,6 +4,7 @@ import { DeckController } from "@/components/shell/DeckController";
 import { SatelliteRail } from "@/components/shell/SatelliteRail";
 import { DraftProvider } from "@/state/DraftProvider";
 import { getGitHub, slots } from "@/lib/github";
+import { getAllPosts } from "@/lib/mdx";
 import {
   AboutMeCard,
   HeroCard,
@@ -24,7 +25,8 @@ export default async function DeckLayout({ children }: LayoutProps<"/">) {
   // GitHub verisi kabuk seviyesinde bir kez çekilir: ray her sayfada duruyor,
   // her route'ta yeniden istek atmak anlamsız olurdu. `getGitHub` asla throw
   // etmez — token yoksa veya API çökerse fallback döner (ARCHITECTURE §5).
-  const github = await getGitHub();
+  // İki bağımsız kaynak — sırayla beklemek için sebep yok.
+  const [github, posts] = await Promise.all([getGitHub(), getAllPosts()]);
   const { carousel } = slots(github.repos);
 
   // Kart içerikleri Server Component olarak üretilip ray'e prop geçer;
@@ -33,7 +35,7 @@ export default async function DeckLayout({ children }: LayoutProps<"/">) {
   const cards = {
     hero: <HeroCard avatarUrl={github.profile.avatarUrl} />,
     projects: <ProjectsCard projects={carousel} />,
-    writings: <WritingsCard />,
+    writings: <WritingsCard writings={posts.slice(0, 8)} />,
     aboutMe: <AboutMeCard />,
     jobOffers: <JobOffersCard />,
     subscribe: <SubscribeCard />,
