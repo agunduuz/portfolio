@@ -8,8 +8,26 @@ gerektiriyor. Kodla kapatılabilecek bir madde kalmadıysa bu dosya doğrudur.
 
 **`[!]` ile başlayan maddeler önerilen sıradaki adımlardır** — panelde turuncu
 görünürler. Seçim ölçütü: en görünür boşluğu kapatan, en ucuz ve başka hiçbir
-şeye bağlı olmayan işler. Yayın (Blok 6) bunlardan sonra gelir; şu an deploy
-etsen ziyaretçi "Biyografi yakında" görürdü.
+şeye bağlı olmayan işler.
+
+---
+
+## Nerede kaldık (2026-09-09)
+
+**Faz 0–9 kodu bitti.** `ROADMAP.md`'de kodla kapatılabilecek madde kalmadı.
+`npx tsc --noEmit`, `npm run lint`, `npm run build` üçü de temiz.
+
+Beş ekran çalışıyor, içerik gerçek: biyografi ve iş geçmişi girildi, üç blog
+yazısı yayında, dört vitrin projesi (RefTakip, Codworks, Vega PDR, Gündüz
+Wedding) `curated-projects.ts`'te.
+
+**Sıradaki tek adım: `.env.local` içindeki boş `GITHUB_TOKEN` satırını doldur.**
+Satır hazır bekliyor. Token girilince profil bio'su, gerçek repo sayısı (şu an
+fallback'ten 4 görünüyor, gerçeği 64) ve carousel'in arka sıraları canlı
+veriyle gelir. Sonra Blok 6 (Vercel deploy).
+
+Site token olmadan da tam çalışır — `getGitHub()` fallback'e düşer, hiçbir kart
+boş kalmaz. Bu bir eksiklik değil, tasarlanmış davranış.
 
 ---
 
