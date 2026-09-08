@@ -132,9 +132,10 @@ kendi grubunu doğruluyor. `hasGitHubEnv()` token yokluğunu sessiz fallback'e �
 ## Faz 4 — Hakkımda ve Projeler (1–2 oturum)
 
 - [x] `/hakkimda` — Hero (`lg`) + Summary/Job History kartı (`AboutBody`)
-- [ ] `config/about.ts` gerçek biyografi ve iş geçmişi
-      — **SAHİBİNİ BEKLİYOR.** Yapı ve boş durum hazır; uydurma biyografi
-      yazılmadı çünkü uydurma iş geçmişi lorem ipsum'dan beterdir.
+- [x] `config/about.ts` gerçek biyografi ve iş geçmişi
+      — **Girildi.** Gerçek biyografi + Otoparçasan / StrategyCube / Litum
+      iş geçmişi. Tip genişletildi (`location` + `highlights`), çünkü gerçek
+      içerik tek satıra sığmıyordu.
 - [x] `/projeler` — ray **sola** geçiyor
 - [x] `LastProject` — kare kapak, açıklama, Go to Live, rozetler, Repository ›
 - [x] `RepoGrid` — 2'li alt grid, geniş kapaklar, sağ altta Repository ›
@@ -159,11 +160,11 @@ kendi grubunu doğruluyor. `hasGitHubEnv()` token yokluğunu sessiz fallback'e �
 ## Faz 5 — Blog (2 oturum)
 
 - [x] `lib/mdx.ts` — frontmatter Zod şeması, `getAllPosts`, `getPost`
-- [ ] 3 örnek MDX yazısı (gerçek içerik, lorem yok)
-      — **2 yazı var, SAHİBİ GÖZDEN GEÇİRMELİ.** İkisi de bu projede gerçekten
-      ölçülmüş bulgular üzerine yazıldı (`minmax(0,1fr)` taşması, Suspense
-      içinde ölen Motion animasyonu). İçerik doğru ama **künye Anıl'ın**;
-      yayından önce kendi sesiyle yeniden yazılmalı ya da silinmeli.
+- [x] 3 örnek MDX yazısı (gerçek içerik, lorem yok)
+      — **Üçü de yayında.** İlk ikisi (`minmax(0,1fr)` taşması, Suspense içinde
+      ölen Motion animasyonu) sahibinin yönergesiyle yeniden yazıldı;
+      üçüncüsü `useSearchParams`'ın statik render'ı bozması ve CSS `:has()`
+      ile kaçınma üzerine.
 - [x] `/blog` — `LastWriting` + `PostList` (3 kart) + `Pagination`
 - [x] Sayfalama `?page=N`, sınır dışı → `notFound()`
       (bozuk girdi `?page=abc` 1. sayfaya düşer, 404 vermez — yalnızca

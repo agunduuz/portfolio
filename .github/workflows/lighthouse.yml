@@ -23,10 +23,13 @@ jobs:
 
       # GitHub sırları olmadan da build geçmeli: lib/github.ts token yoksa
       # fallback'e düşer. Bu, Faz 3'ün bitiş kriterinin CI'daki karşılığı.
+      # Lighthouse http://localhost:3000 üzerinde ölçer; metadataBase üretim
+      # domain'ini gösterirse canonical farklı origin'e işaret eder ve SEO
+      # audit'i bunu fail eder. Bu build deploy edilmiyor — sadece ölçüm için.
       - name: Build
         run: npm run build
         env:
-          NEXT_PUBLIC_SITE_URL: https://anilgunduz.dev
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
           NEXT_PUBLIC_CAREER_START: "2021-09-01T00:00:00Z"
 
       - name: Lighthouse
