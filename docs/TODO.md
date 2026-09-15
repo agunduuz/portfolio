@@ -21,13 +21,28 @@ Beş ekran çalışıyor, içerik gerçek: biyografi ve iş geçmişi girildi, �
 yazısı yayında, dört vitrin projesi (RefTakip, Codworks, Vega PDR, Gündüz
 Wedding) `curated-projects.ts`'te.
 
-**Sıradaki tek adım: `.env.local` içindeki boş `GITHUB_TOKEN` satırını doldur.**
-Satır hazır bekliyor. Token girilince profil bio'su, gerçek repo sayısı (şu an
-fallback'ten 4 görünüyor, gerçeği 64) ve carousel'in arka sıraları canlı
-veriyle gelir. Sonra Blok 6 (Vercel deploy).
+**`GITHUB_TOKEN` girildi ve geçerli** — API'ye doğrudan sorulduğunda `agunduuz`,
+bio "Front End Developer", 67 public repo dönüyor.
+
+**Ama site hâlâ fallback gösteriyor** (Repository 4, bio yok) ve bu bir
+yapılandırma tuzağı: `env.server.ts`'teki `githubSchema` `GITHUB_WEBHOOK_SECRET`'ı
+da zorunlu tutuyor, oysa `hasGitHubEnv()` kapısı yalnızca token + username'e
+bakıyor. `getGitHub()` kapıdan geçiyor, `githubEnv()` fırlatıyor, `github.ts:353`
+bare `catch`'i sessizce fallback'e düşürüyor — log'a hiçbir şey düşmüyor.
+
+İki çıkış var, ikisi de doğru:
+
+1. `GITHUB_WEBHOOK_SECRET`'ı şimdi üret (`openssl rand -hex 32`) — nasılsa
+   üretimde gerekecek, tek komut.
+2. Webhook sırrını `githubSchema`'dan ayır; okuma yolu onu istemesin. Dosyanın
+   kendi yorumunun ("bir grubu okuyan modül yalnızca kendi grubunu doğrulamalı")
+   söylediği şey bu; sırrı yalnızca `api/revalidate` okumalı.
+
+Sonrası: Blok 4 (repo eleme + açıklama + topic), sonra Blok 6 (Vercel deploy).
 
 Site token olmadan da tam çalışır — `getGitHub()` fallback'e düşer, hiçbir kart
-boş kalmaz. Bu bir eksiklik değil, tasarlanmış davranış.
+boş kalmaz. Bu bir eksiklik değil, tasarlanmış davranış. Sessizce fallback'e
+düşen **yanlış yapılandırma** ise tasarlanmış değil; yukarıdaki tuzak odur.
 
 ---
 
@@ -53,15 +68,19 @@ Bunlar olmadan site yayına çıkmamalı; sayfalar boş durum metniyle görünü
 
 `.env.local` dosyasına. Hiçbiri olmadan site çalışır ama özellikler kapalıdır.
 
-- [ ] [!] `GITHUB_TOKEN` — **satır `.env.local`'de hazır, değeri boş.**
-      Fine-grained PAT: github.com/settings/personal-access-tokens →
-      Repository access `Public Repositories (read-only)`, permissions
-      `Metadata: Read-only`. Yoksa site fallback ile çalışır.
+- [x] `GITHUB_TOKEN` — girildi ve **geçerli**: API'ye doğrudan sorulduğunda
+      `agunduuz`, bio "Front End Developer", 67 public repo dönüyor. Ama site
+      hâlâ fallback gösteriyor; sebep aşağıdaki `GITHUB_WEBHOOK_SECRET` maddesi.
 - [x] `GITHUB_USERNAME=agunduuz` — `.env.local`'e yazıldı
+- [ ] [!] `GITHUB_WEBHOOK_SECRET` — `openssl rand -hex 32`. **Artık üretimden
+      önce de gerekli:** `env.server.ts`'teki `githubSchema` bu değişkeni de
+      istiyor, `hasGitHubEnv()` ise yalnızca token + username'e bakıyor. Sonuç:
+      `getGitHub()` kapıdan geçiyor, `githubEnv()` fırlatıyor, `catch` sessizce
+      fallback'e düşürüyor. Token'ın etkisi bu değer girilene kadar görünmez.
+      (Alternatif: webhook sırrını şemadan ayırmak — bkz. aşağıdaki not.)
 - [ ] `RESEND_API_KEY` + `CONTACT_EMAIL` — yoksa formlar "e-posta servisi bağlı
       değil" der (bilinçli: sessizce "gönderildi" demek yalan olurdu)
 - [ ] `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` — yoksa hız sınırı kapalı
-- [ ] `GITHUB_WEBHOOK_SECRET` — `openssl rand -hex 32`. Yalnızca üretimde gerekli.
 
 ## Blok 3 — Tasarım kararları
 
@@ -83,13 +102,15 @@ Vitrindeki dört projenin metni ve kapağı artık `curated-projects.ts`'ten
 geliyor; GitHub açıklamaları onları **etkilemiyor**. Buradaki maddeler
 carousel'de vitrinin ARKASINDAN gelen repo'lar için.
 
-- [ ] Projects carousel'i ilk 8 repo'yu gösteriyor. Vitrinden sonraki 4 sırada
-      hangi repo'lar çıkacaksa onlara GitHub'da **açıklama** ekle — açıklaması
-      olmayan repo kartta yalnızca ad + "Go to Live" olarak görünür.
-- [ ] Aynı repo'lara **topic** ekle (`nextjs`, `typescript`, `tailwindcss`) —
+- [ ] [!] Vitrine girmesini istemediğin repo'lara `portfolio-hidden` topic'i
+      (**67** public repo var; carousel ilk 8'i alıyor). Token çalışır çalışmaz
+      en görünür boşluk bu: eleme yapılmazsa arka dört sırayı ne çıkarsa o
+      dolduruyor.
+- [ ] [!] Projects carousel'i ilk 8 repo'yu gösteriyor. Vitrinden sonraki 4
+      sırada hangi repo'lar çıkacaksa onlara GitHub'da **açıklama** ekle —
+      açıklaması olmayan repo kartta yalnızca ad + "Go to Live" olarak görünür.
+- [ ] [!] Aynı repo'lara **topic** ekle (`nextjs`, `typescript`, `tailwindcss`) —
       teknoloji rozetleri oradan türüyor
-- [ ] Vitrine girmesini istemediğin repo'lara `portfolio-hidden` topic'i
-      (64 public repo var; carousel ilk 8'i alıyor)
 
 ## Blok 5 — Elle test (tarayıcı aracı gerekiyor)
 
